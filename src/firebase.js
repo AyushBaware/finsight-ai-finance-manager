@@ -6,13 +6,32 @@ import {
   getFirestore,
 } from "firebase/firestore"
 
+// ── Firebase config now comes from environment variables ──────────────────
+// Never hardcode these values here. Set them in your local .env file
+// (see .env.example) and in your Vercel/Netlify dashboard for production.
+// Vite only exposes variables prefixed with VITE_ to client-side code.
 const firebaseConfig = {
-  apiKey: "AIzaSyDdb1-1F5Vtd9KAaxO3JrmS-Nr9GwWaS8M",
-  authDomain: "finsight-web.firebaseapp.com",
-  projectId: "finsight-web",
-  storageBucket: "finsight-web.firebasestorage.app",
-  messagingSenderId: "792812376072",
-  appId: "1:792812376072:web:279393f403e32be95281bd",
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+}
+
+// Fail loudly in development if someone forgot to set up .env — this saves
+// you from a confusing "Firebase: Error (auth/invalid-api-key)" later.
+if (import.meta.env.DEV) {
+  const missing = Object.entries(firebaseConfig)
+    .filter(([, value]) => !value)
+    .map(([key]) => key)
+
+  if (missing.length > 0) {
+    console.error(
+      `[firebase.js] Missing environment variables: ${missing.join(", ")}.\n` +
+        "Did you create a .env file from .env.example and restart the dev server?",
+    )
+  }
 }
 
 const app = initializeApp(firebaseConfig)

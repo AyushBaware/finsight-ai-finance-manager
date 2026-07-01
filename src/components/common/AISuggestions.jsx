@@ -1,7 +1,7 @@
 import { useState } from "react"
 import Card from "../ui/Card"
 import Button from "../ui/Button"
-import generateAISuggestions from "../../services/aiService"
+import generateSmartSuggestions from "../../services/aiService"
 import { ChevronDown, ChevronUp, TrendingUp, Lightbulb } from "lucide-react"
 
 const AISuggestions = ({ financialData }) => {
@@ -10,8 +10,8 @@ const AISuggestions = ({ financialData }) => {
 
   // Generate dynamic suggestions based on user data
   const suggestions = financialData
-    ? generateAISuggestions(financialData)
-    : []
+  ? generateSmartSuggestions(financialData)
+  : []
 
   const displayedSuggestions = showAll
     ? suggestions
@@ -30,11 +30,11 @@ const AISuggestions = ({ financialData }) => {
           </div>
           <div>
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-              Smart AI Suggestions
-            </h2>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              Personalized financial insights for you
-            </p>
+  Smart Suggestions
+</h2>
+<p className="text-xs text-gray-500 dark:text-gray-400">
+  Rule-based insights calculated from your own numbers
+</p>
           </div>
         </div>
       </div>

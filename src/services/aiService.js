@@ -1,7 +1,15 @@
-// AI Service for generating smart financial suggestions
-// This service analyzes user financial data and provides intelligent recommendations
+// Smart Suggestions Service
+//
+// IMPORTANT — HONESTY NOTE FOR THIS PROJECT:
+// Everything in this file is deterministic, rule-based financial logic
+// (allocation percentages, threshold checks, standard formulas). It is NOT
+// a machine-learning model or an LLM. We label it "Smart Suggestions"
+// rather than "AI" in the UI for that reason — it's genuinely useful,
+// explainable, and debuggable logic, and there's no need to oversell it.
+// (A real LLM-backed conversational advisor, if added later, should live
+// in a separate service and be clearly labeled as AI-generated.)
 
-const generateAISuggestions = (financialData) => {
+const generateSmartSuggestions = (financialData) => {
   const {
     monthlyIncome,
     totalExpenses,
@@ -11,7 +19,6 @@ const generateAISuggestions = (financialData) => {
   } = financialData
 
   const leftoverMoney = monthlyIncome - totalExpenses
-  const _savingsRate = (leftoverMoney / monthlyIncome) * 100
   const expensesByCategory = categorizeExpenses(expenses)
 
   const suggestions = []
@@ -27,10 +34,15 @@ const generateAISuggestions = (financialData) => {
       priority: "high",
       category: "allocation",
       icon: "💰",
+      source: "rules",
     })
   }
 
   // 2. Investment Recommendations
+  // NOTE: these are illustrative category-level allocations (e.g. "Mutual
+  // Funds (Balanced)"), not specific fund names or buy recommendations.
+  // Real, live fund matching lives in the upcoming Goal-Based Investment
+  // Planner, which pulls actual AMFI NAV data through the backend.
   if (leftoverMoney > 1000) {
     const investments = getInvestmentRecommendations(
       leftoverMoney,
@@ -39,16 +51,17 @@ const generateAISuggestions = (financialData) => {
     suggestions.push({
       id: "investment",
       title: "📈 Investment Opportunities",
-      desc: `Invest ₹${Math.floor(leftoverMoney * 0.5).toLocaleString()} to grow wealth`,
+      desc: `Consider allocating ₹${Math.floor(leftoverMoney * 0.5).toLocaleString()} towards long-term goals`,
       details: investments,
       priority: "high",
       category: "investment",
       icon: "📈",
-      action: "Learn More",
+      action: "Plan a Goal",
+      source: "rules",
     })
   }
 
-  // 3. Spending Insights
+  // 3. Spending Insights — reframed to be informative, not accusatory.
   const topCategory = Object.entries(expensesByCategory).sort(
     ([, a], [, b]) => b - a
   )[0]
@@ -58,12 +71,13 @@ const generateAISuggestions = (financialData) => {
     if (categorySpend > avgSpend * 1.3) {
       suggestions.push({
         id: "spending",
-        title: "🔍 Spending Alert",
-        desc: `${topCategory[0]} spending is ₹${categorySpend.toLocaleString()} (${((categorySpend / totalExpenses) * 100).toFixed(1)}% of total)`,
-        details: `This is 30% higher than average. Consider optimizing this category.`,
+        title: "🔍 Category Worth a Look",
+        desc: `${topCategory[0]} is your biggest category this month at ₹${categorySpend.toLocaleString()} (${((categorySpend / totalExpenses) * 100).toFixed(1)}% of total)`,
+        details: `That's higher than your other categories. No action needed unless you want to explore ways to free up some room here.`,
         priority: "medium",
         category: "alert",
         icon: "🔍",
+        source: "rules",
       })
     }
   }
@@ -75,11 +89,12 @@ const generateAISuggestions = (financialData) => {
       id: "savings",
       title: "🎯 Savings Goal Progress",
       desc: `${Math.min(goalProgress, 100).toFixed(1)}% towards your ₹${savingsGoal.toLocaleString()} goal`,
-      details: `You're on track! Keep saving ₹${Math.floor(leftoverMoney).toLocaleString()} per month.`,
+      details: `At this pace, saving ₹${Math.floor(leftoverMoney).toLocaleString()} per month keeps you moving forward.`,
       priority: goalProgress < 50 ? "high" : "low",
       category: "goal",
       icon: "🎯",
       progress: Math.min(goalProgress, 100),
+      source: "rules",
     })
   }
 
@@ -89,24 +104,27 @@ const generateAISuggestions = (financialData) => {
     suggestions.push({
       id: "emergency",
       title: "🛡️ Emergency Fund",
-      desc: `Build 6 months of expenses (₹${emergencyFundGoal.toLocaleString()})`,
-      details: `Save ₹${Math.ceil(leftoverMoney * 0.3).toLocaleString()} monthly for emergencies.`,
+      desc: `A buffer of ₹${emergencyFundGoal.toLocaleString()} (about 6 months of expenses) adds a lot of peace of mind`,
+      details: `Setting aside ₹${Math.ceil(leftoverMoney * 0.3).toLocaleString()} monthly would build this steadily.`,
       priority: "high",
       category: "safety",
       icon: "🛡️",
+      source: "rules",
     })
   }
 
-  // 6. Smart Debt Reduction (if applicable)
+  // 6. Expense Ratio Note — reframed away from "debt" framing when there's
+  // no actual debt data; this is about the ratio of spend to income.
   if (totalExpenses > monthlyIncome * 0.8) {
     suggestions.push({
-      id: "debt",
-      title: "📉 Expense Reduction Tips",
-      desc: "Your expense ratio is high. Here are ways to optimize:",
+      id: "ratio",
+      title: "📉 A Few Ideas to Create Breathing Room",
+      desc: "Your expenses are close to your income this month — here are some optional ideas:",
       details: getExpenseReductionTips(expensesByCategory),
       priority: "high",
       category: "optimization",
       icon: "📉",
+      source: "rules",
     })
   }
 
@@ -120,10 +138,11 @@ const generateAISuggestions = (financialData) => {
       priority: "medium",
       category: "seasonal",
       icon: seasonalSuggestion.icon,
+      source: "rules",
     })
   }
 
-  // 8. Investment Suitability Score
+  // 8. Financial Health Score
   const suitabilityScore = calculateInvestmentSuitability(
     leftoverMoney,
     monthlyIncome,
@@ -138,6 +157,7 @@ const generateAISuggestions = (financialData) => {
       priority: "medium",
       category: "score",
       icon: "✨",
+      source: "rules",
     })
   }
 
@@ -185,6 +205,10 @@ const allocateLeftoverMoney = (amount, riskTolerance) => {
 }
 
 // Helper: Get investment recommendations
+// These are category-level illustrations only (asset class + approximate
+// historical return ranges), never specific tickers/fund names, and never
+// phrased as instructions to buy. Real fund matching happens server-side
+// against live AMFI data in the Goal-Based Investment Planner.
 const getInvestmentRecommendations = (amount, riskTolerance) => {
   const recommendations = {
     low: [
@@ -235,22 +259,16 @@ const getInvestmentRecommendations = (amount, riskTolerance) => {
         risk: "High",
       },
       {
-        name: "Stock Market (Blue Chips)",
-        allocation: Math.floor(amount * 0.35),
-        roi: "10-20%",
-        risk: "High",
-      },
-      {
-        name: "Crypto/Digital Assets",
-        allocation: Math.floor(amount * 0.15),
-        roi: "20-50%+",
-        risk: "Very High",
-      },
-      {
         name: "Index Funds",
-        allocation: Math.floor(amount * 0.1),
+        allocation: Math.floor(amount * 0.35),
         roi: "8-12%",
         risk: "Medium",
+      },
+      {
+        name: "Direct Equity (Diversified)",
+        allocation: Math.floor(amount * 0.25),
+        roi: "10-20%",
+        risk: "High",
       },
     ],
   }
@@ -258,26 +276,26 @@ const getInvestmentRecommendations = (amount, riskTolerance) => {
   return recommendations[riskTolerance] || recommendations.medium
 }
 
-// Helper: Get expense reduction tips
+// Helper: Get expense reduction tips (framed as optional ideas, not orders)
 const getExpenseReductionTips = (expensesByCategory) => {
   const tips = []
 
   if (expensesByCategory["Food & Dining"] > 5000) {
-    tips.push("🍽️ Cook at home more often - Save ₹500-1000 monthly")
+    tips.push("🍽️ Cooking at home a bit more could free up ₹500-1000 monthly")
   }
   if (expensesByCategory["Entertainment"] > 3000) {
-    tips.push("🎬 Use free entertainment options - Save ₹500-800 monthly")
+    tips.push("🎬 Mixing in some free entertainment options could save ₹500-800 monthly")
   }
   if (expensesByCategory["Shopping"] > 4000) {
-    tips.push("🛍️ Implement 30-day rule before purchases - Save ₹1000+ monthly")
+    tips.push("🛍️ A short pause before non-essential purchases could save ₹1000+ monthly")
   }
   if (expensesByCategory["Utilities"] > 2000) {
-    tips.push("💡 Reduce energy consumption - Save ₹300-500 monthly")
+    tips.push("💡 Small energy-usage tweaks could save ₹300-500 monthly")
   }
 
   return tips.length > 0
     ? tips.join("\n")
-    : "Review each category and set spending limits."
+    : "Take a look through your categories whenever it's convenient — no rush."
 }
 
 // Helper: Get seasonal insights
@@ -309,7 +327,10 @@ const getSeasonalInsight = () => {
   return insights[month] || null
 }
 
-// Helper: Calculate investment suitability score
+// Helper: Calculate a financial health score (0-100).
+// This is a transparent, rule-based composite score — not a credit score,
+// not derived from any bureau data, purely computed from the user's own
+// entered numbers. Worth stating that explicitly in the UI/README too.
 const calculateInvestmentSuitability = (leftoverMoney, income, riskTolerance) => {
   let score = 0
 
@@ -326,13 +347,16 @@ const calculateInvestmentSuitability = (leftoverMoney, income, riskTolerance) =>
   score += amountScore
 
   // Consistency bonus (0-20 points)
-  score += 20 // Placeholder for actual consistency tracking
+  // NOTE: This is currently a flat placeholder. A real implementation should
+  // track actual logging/saving consistency over recent months from
+  // Firestore history rather than awarding this by default.
+  score += 20
 
   const messages = {
-    excellent: "Excellent! You're in a great position to invest and grow wealth.",
-    good: "Good financial health. Continue saving and investing regularly.",
-    fair: "Fair position. Increase savings rate for better financial growth.",
-    poor: "Focus on increasing your savings rate first.",
+    excellent: "You're in a strong position — investing and steadily growing wealth are realistic next steps.",
+    good: "Good financial health. Keep saving and investing at this pace.",
+    fair: "You're in a fair position. Growing your savings rate a bit would open up more options.",
+    poor: "Building up your savings rate first will create more room to work with.",
   }
 
   let category = "fair"
@@ -357,26 +381,4 @@ const categorizeExpenses = (expenses) => {
   return categories
 }
 
-// Simple market sentiment helper (simulated).
-// This is pluggable — replace implementation with a real sentiment feed/API later.
-export function getMarketSentiment(key) {
-  // deterministically generate a pseudo-score from the key and today's date
-  const seed = `${key}-${new Date().toISOString().slice(0,10)}`
-  let h = 0
-  for (let i = 0; i < seed.length; i++) h = (h << 5) - h + seed.charCodeAt(i)
-  const score = ((h % 101) - 50) / 50 // -1 .. +1 roughly
-  const sentiment = score > 0.2 ? 'positive' : score < -0.2 ? 'negative' : 'neutral'
-  const summary = sentiment === 'positive'
-    ? 'Market sentiment currently positive for this type; consider researching top funds.'
-    : sentiment === 'negative'
-    ? 'Market sentiment shows caution; research defensive funds or wait for a better entry.'
-    : 'Mixed signals; do additional research before investing.'
-
-  return {
-    score: Number((score).toFixed(2)),
-    sentiment,
-    summary,
-  }
-}
-
-export default generateAISuggestions
+export default generateSmartSuggestions
