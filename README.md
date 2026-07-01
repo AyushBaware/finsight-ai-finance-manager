@@ -1,259 +1,224 @@
-﻿# FinSight - AI-Powered Personal Finance Management
+﻿# FinSight
 
-A modern, intelligent financial management web application that combines expense tracking, smart analytics, and AI-driven financial advice to help you manage your money better.
-
-![FinSight](https://img.shields.io/badge/React-19-blue) ![Vite](https://img.shields.io/badge/Vite-7-blue) ![Firebase](https://img.shields.io/badge/Firebase-12-orange) ![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-4-06B6D4)
-
-## ✨ Key Features
-
-### 💰 Expense Management
-- **Quick Add** - Add expenses instantly with intuitive interface
-- **Voice-to-Expense** - Convert voice commands to expenses with automatic categorization
-- **Smart Categorization** - Expenses auto-categorized into 8+ categories
-- **Search & Filter** - Find expenses by category or keywords
-- **Real-time Sync** - Automatic cloud sync across devices
-
-### 📊 Analytics & Insights
-- **Dashboard Overview** - Real-time view of income, expenses, and savings rate
-- **Category Breakdown** - Visual charts showing expense distribution
-- **Weekly Analysis** - Expense trends by week within current month
-- **Smart Expense Analyzer** - AI-powered analysis of spending patterns
-
-### 🤖 AI-Powered Financial Advisor
-- **Smart Money Allocation** - Intelligent recommendations for leftover money
-- **Investment Recommendations** - Personalized investment suggestions based on risk tolerance
-- **Financial Goal Planner** - Create and track financial goals
-- **Investment Simulator** - Test investment scenarios with projections
-- **Wealth Projection Calculator** - Predict long-term wealth growth
-- **Lifestyle Expense Tracker** - Track discretionary vs essential spending
-- **Personalized Financial Advisor** - AI chatbot for financial queries
-
-### 🎯 Additional Tools
-- **Risk Assessment** - Evaluate your investment risk tolerance
-- **Budget Planning** - Set monthly income targets and track savings goals
-- **Multi-Category Support** - Food & Dining, Transport, Shopping, Entertainment, Utilities, Healthcare, Subscriptions, and more
-- **Data Export** - Download and backup your financial data
-- **Theme Customization** - Dark/Light mode with multiple theme options
-
-### 📱 User Experience
-- **Responsive Design** - Perfect on desktop, tablet, and mobile
-- **Offline Support** - PWA with offline capability and local persistence
-- **Multi-Tab Sync** - Firestore persistence syncs across browser tabs
-- **Intuitive Navigation** - Sidebar and bottom navigation for easy access
-- **Toast Notifications** - Real-time feedback on all actions
-
-## 🚀 Technology Stack
-
-- **Frontend Framework** - React 19
-- **Build Tool** - Vite 7
-- **Backend** - Firebase (Authentication + Firestore)
-- **Styling** - Tailwind CSS 4
-- **Charts & Visualization** - Recharts
-- **Icons** - Lucide React, React Icons
-- **Routing** - React Router DOM
-- **PWA** - Vite PWA Plugin
-- **HTTP Client** - Axios
-
-## 📋 Project Structure
-
-`
-src/
-├── components/
-│   ├── common/          # Reusable components (AI advisors, expense widgets)
-│   ├── layout/          # App layout (header, sidebar, navigation)
-│   └── ui/              # Basic UI components (buttons, inputs, modals)
-├── pages/               # Page components (Dashboard, Analytics, etc.)
-├── context/             # React Context (Expenses, Theme state)
-├── hooks/               # Custom React hooks (voice-to-expense parsing)
-├── services/            # Business logic (AI, data, theme, settings)
-├── utils/               # Utilities (toast notifications)
-└── main.jsx             # App entry point
-`
-
-## 🔧 Installation & Setup
-
-### Prerequisites
-- Node.js 16+ 
-- npm or yarn
-
-### Steps
-
-1. **Clone the repository**
-   `bash
-   git clone https://github.com/yourusername/finSight.git
-   cd finSight-main
-   `
-
-2. **Install dependencies**
-   `bash
-   npm install
-   `
-
-3. **Environment Setup**
-   - Firebase config is pre-configured in src/firebase.js
-   - No additional .env file needed for basic setup
-
-4. **Start development server**
-   `bash
-   npm run dev
-   `
-   The app will be available at http://localhost:5173
-
-5. **Build for production**
-   `bash
-   npm run build
-   `
-
-6. **Preview production build**
-   `bash
-   npm run preview
-   `
-
-## 🔐 Authentication
-
-- **Google Sign-In** - Sign in with your Google account
-- **Firebase Authentication** - Secure, managed authentication
-- **Session Persistence** - Stay logged in across browser sessions
-
-## 💾 Data Storage
-
-- **Cloud Storage** - Firestore for real-time data sync
-- **Offline Persistence** - IndexedDB for offline access
-- **Multi-Tab Support** - Automatic sync across browser tabs
-- **Data Privacy** - Only your authenticated account accesses your data
-
-## 🎨 Themes & Customization
-
-**Available Themes:**
-- Light Mode
-- Dark Mode
-- System Preference (auto-detect)
-
-Access theme settings in the **Settings** page to customize your experience.
-
-## 📊 Pages Overview
-
-| Page | Purpose |
-|------|---------|
-| **Dashboard** | Quick financial overview, recent expenses, AI suggestions |
-| **Expenses** | Manage, view, and analyze all expenses with search & filter |
-| **Analytics** | Detailed charts, trends, investment simulations, wealth projections |
-| **Categories** | View and manage expense categories |
-| **Settings** | Profile, theme, import/export data, financial preferences |
-| **Add Expense** | Detailed expense creation with all details |
-
-## 🔄 Workflow Examples
-
-### Log an Expense (Voice)
-1. Click **Voice Recorder** button
-2. Say: "Spent 50 rupees at Starbucks for lunch"
-3. System auto-detects: Amount, Merchant, Category, Note
-4. Confirm and save
-
-### Check Financial Health
-1. Go to **Dashboard**
-2. View: Total expenses, savings rate, leftover money
-3. Read AI suggestions for money allocation and investments
-
-### Plan Investments
-1. Go to **Analytics**
-2. Use **Investment Simulator** to test scenarios
-3. Check **Wealth Projection Calculator** for long-term goals
-4. Review **Financial Goal Planner** recommendations
-
-## 🔗 API Integration
-
-- **Firebase Authentication API** - User login and session management
-- **Firestore Database API** - Real-time expense data storage
-- **Firestore Offline Persistence** - Local caching and sync
-
-## 📱 Browser Support
-
-- Chrome 90+
-- Firefox 88+
-- Safari 14+
-- Edge 90+
-
-## 🚀 Deployment
-
-### Deploy to Vercel (Recommended)
-`ash
-npm install -g vercel
-vercel
-`
-
-### Deploy to Netlify
-`ash
-npm run build
-# Upload dist/ folder to Netlify
-`
-
-### Deploy to Firebase Hosting
-`ash
-npm install -g firebase-tools
-firebase init
-firebase deploy
-`
-
-## 📝 Available Scripts
-
-`ash
-npm run dev      # Start development server
-npm run build    # Build for production
-npm run preview  # Preview production build locally
-npm run lint     # Run ESLint checks
-`
-
-## 🤝 Features in Development
-
-- [ ] Recurring expense management
-- [ ] Bill reminders
-- [ ] Budget alerts
-- [ ] Export to PDF/Excel
-- [ ] Collaborative budgeting
-- [ ] Mobile app (React Native)
-
-## 🐛 Troubleshooting
-
-**Issue: Expenses not syncing**
-- Check internet connection
-- Verify Firebase is connected (check console)
-- Try refreshing the page
-
-**Issue: Voice recognition not working**
-- Ensure microphone permissions are granted
-- Use Chrome or Edge for best support
-- Speak clearly and naturally
-
-**Issue: Offline mode issues**
-- Clear browser cache and try again
-- Check browser storage quota
-- Disable browser extensions that block storage
-
-## 📄 License
-
-This project is open source and available under the MIT License.
-
-## 👨‍💻 Author
-
-**Your Name**
-- GitHub: [@yourusername](https://github.com/yourusername)
-- Email: your.email@example.com
-
-## 🙏 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-1. Fork the repository
-2. Create your feature branch (git checkout -b feature/AmazingFeature)
-3. Commit your changes (git commit -m 'Add some AmazingFeature')
-4. Push to the branch (git push origin feature/AmazingFeature)
-5. Open a Pull Request
-
-## 📞 Support
-
-For support, email your.email@example.com or open an issue on GitHub.
+AI-powered personal finance management with voice-enabled expense capture, financial analytics, and offline-capable PWA behavior.
 
 ---
 
-**Made with ❤️ for better financial management**
+## Overview
+
+FinSight is built for users who want a smarter, faster way to track spending and monitor financial health. The application combines expense management, real-time analytics, AI-backed recommendations, and Firebase persistence into a responsive web experience.
+
+Key capabilities:
+- Expense logging by manual input or voice
+- Auto-category detection for spending
+- Dashboard analytics with charts and trends
+- Savings and investment guidance
+- Offline support with Firestore persistence
+
+---
+
+## Live Demo
+
+The project is hosted on Vercel:
+
+https://finsight-ai-finance-manager.vercel.app/
+
+---
+
+## Table of Contents
+
+- [Features](#features)
+- [Tech Stack](#tech-stack)
+- [Architecture](#architecture)
+- [Project Structure](#project-structure)
+- [Installation](#installation)
+- [Firebase Configuration](#firebase-configuration)
+- [Development](#development)
+- [Production](#production)
+- [Deployment](#deployment)
+- [Troubleshooting](#troubleshooting)
+- [License](#license)
+
+---
+
+## Features
+
+### Expense Management
+- Manual expense entry with merchant, category, date, and notes
+- Voice-based expense capture with natural language parsing
+- Automatic expense categorization across key spending groups
+- Search and filter for faster transaction recovery
+- Cloud sync through Firestore
+
+### Analytics and Insights
+- Financial dashboard with totals, balances, and savings rate
+- Category breakdown using visual charts
+- Weekly spend trends and comparison
+- AI-driven expense analysis with tailored suggestions
+
+### Financial Planning
+- Personalized allocation recommendations
+- Investment suggestion module
+- Financial goal planning and progress tracking
+- Wealth projection and simulation tools
+
+### UX and Platform
+- Responsive layout for desktop and mobile
+- PWA-ready installable experience
+- Offline persistence via IndexedDB
+- Real-time status and toast notifications
+
+---
+
+## Tech Stack
+
+- React 19
+- Vite
+- Tailwind CSS
+- Firebase Authentication + Firestore
+- Recharts
+- React Router DOM
+- Axios
+- Vite PWA Plugin
+
+---
+
+## Architecture
+
+The application is structured to separate UI, business logic, and platform integration:
+
+- `src/components/` — reusable UI and feature components
+- `src/pages/` — route-based views like Dashboard, Expenses, Analytics
+- `src/hooks/` — custom hooks such as voice recognition and expense parsing
+- `src/services/` — data access, AI services, theme and settings logic
+- `src/context/` — global state providers
+- `src/firebase.js` — Firebase initialization and persistence handling
+
+This layout supports modular development and simplifies feature extension.
+
+---
+
+## Project Structure
+
+```text
+src/
+├── components/
+│   ├── common/          # Business-facing shared components
+│   ├── layout/          # Page structure and navigation
+│   └── ui/              # Generic UI primitives
+├── context/             # React context providers
+├── hooks/               # Custom hooks and feature logic
+├── pages/               # Application views / routes
+├── services/            # Backend and AI helpers
+├── utils/               # Utility functions and helpers
+├── firebase.js          # Firebase configuration and persistence
+└── main.jsx             # Application entry point
+```
+
+---
+
+## Installation
+
+### Prerequisites
+
+- Node.js 16+
+- npm or yarn
+
+### Setup
+
+```bash
+git clone https://github.com/AyushBaware/finsight-ai-finance-manager.git
+cd finsight-ai-finance-manager
+npm install
+```
+
+---
+
+## Firebase Configuration
+
+Firebase is initialized in `src/firebase.js` using the current `finsight-web` project configuration.
+
+To use your own Firebase project:
+1. Create a Firebase project
+2. Enable Google Authentication
+3. Create a Firestore database
+4. Replace the config values in `src/firebase.js`
+
+The app includes offline persistence handling using Firestore and IndexedDB.
+
+---
+
+## Development
+
+```bash
+npm run dev
+```
+
+Open the local URL shown by Vite (typically `http://localhost:5173`).
+
+### Recommended Browser
+
+For the best voice recognition experience, use Chrome or Microsoft Edge. Localhost is treated as a secure context, so microphone access should work without HTTPS.
+
+---
+
+## Production
+
+```bash
+npm run build
+npm run preview
+```
+
+---
+
+## Deployment
+
+This section explains the recommended deployment options for FinSight.
+
+### Deploy to Vercel
+
+Vercel is the easiest option for deploying a Vite application.
+
+```bash
+npm install -g vercel
+vercel
+```
+
+When prompted, select the current project directory and set the framework to `Vite`.
+
+### Deploy to Firebase Hosting
+
+Firebase Hosting is the preferred option when using Firestore and Firebase Authentication.
+
+```bash
+npm install -g firebase-tools
+firebase login
+firebase init hosting
+npm run build
+firebase deploy
+```
+
+During `firebase init hosting`, choose your Firebase project and configure the public directory as `dist`.
+
+### Deploy to Netlify
+
+```bash
+npm run build
+```
+
+Then deploy the generated `dist/` folder to Netlify using the web UI or the Netlify CLI.
+
+---
+
+## Troubleshooting
+
+- **Voice recognition does not work:** verify microphone permission, use Chrome/Edge, and ensure the browser input device is correct.
+- **SpeechRecognition unsupported:** Firefox has limited Web Speech API support for recognition.
+- **Offline persistence issues:** check IndexedDB availability and browser storage settings.
+- **Firestore sync issues:** inspect browser console for Firebase errors and validate authentication status.
+
+---
+
+## License
+
+MIT License
