@@ -5,6 +5,7 @@ import Modal from "../ui/Modal"
 import Button from "../ui/Button"
 import Input from "../ui/Input"
 import { showToast } from "../../utils/toastStore"
+import { useVoiceToExpense } from "../../hooks/useVoiceToExpense"
 
 const QuickAddExpenseModal = ({ isOpen, onClose, onExpenseAdded }) => {
   const { addExpense, isOnline, user } = useExpenses()

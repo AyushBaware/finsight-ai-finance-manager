@@ -1,18 +1,22 @@
-import { useState } from "react"
-import { Plus, Search, Trash2 } from "lucide-react"
+import { useState } from "react";
+import { Plus, Search, Trash2 } from "lucide-react";
 
-import Card from "../components/ui/Card"
-import Input from "../components/ui/Input"
-import Button from "../components/ui/Button"
-import SmartExpenseAnalyzer from "../components/common/SmartExpenseAnalyzer"
-import VoiceRecorder from "../components/common/VoiceRecorder"
-import { ToastContainer } from "../components/common/Toast"
-import { useExpenses } from "../context/ExpensesContext"
+import Card from "../components/ui/Card";
+import Input from "../components/ui/Input";
+import Button from "../components/ui/Button";
+import settingsService from "../services/settingsService";
+import SmartExpenseAnalyzer from "../components/common/SmartExpenseAnalyzer";
+import VoiceRecorder from "../components/common/VoiceRecorder";
+import { ToastContainer } from "../components/common/Toast";
+import { useExpenses } from "../context/ExpensesContext";
 
 const Expenses = () => {
-  const { addExpense, deleteExpense, expenses, hasPendingWrites, isReady } = useExpenses()
-  const [searchTerm, setSearchTerm] = useState("")
-  const [selectedCategory, setSelectedCategory] = useState("All")
+  const { addExpense, deleteExpense, expenses, hasPendingWrites, isReady } =
+    useExpenses();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("All");
+
+  const monthlyIncome = Number(settingsService.getMonthlyIncome()) || 0;
 
   const categories = [
     "All",
@@ -23,37 +27,39 @@ const Expenses = () => {
     "Transport",
     "Subscription",
     "Healthcare",
-  ]
+  ];
 
   const filteredExpenses = expenses.filter((expense) => {
-    const categoryValue = expense.category || ""
-    const noteValue = expense.note || ""
+    const categoryValue = expense.category || "";
+    const noteValue = expense.note || "";
     const matchesSearch =
       categoryValue.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      noteValue.toLowerCase().includes(searchTerm.toLowerCase())
+      noteValue.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory =
-      selectedCategory === "All" || categoryValue === selectedCategory
+      selectedCategory === "All" || categoryValue === selectedCategory;
 
-    return matchesSearch && matchesCategory
-  })
+    return matchesSearch && matchesCategory;
+  });
 
   const overallExpenseAmount = expenses.reduce(
     (sum, expense) => sum + (Number(expense.amount) || 0),
     0,
-  )
+  );
   const categoryExpenses = categories
     .filter((category) => category !== "All")
     .map((category) => {
       const total = expenses
         .filter((expense) => (expense.category || "") === category)
-        .reduce((sum, expense) => sum + (Number(expense.amount) || 0), 0)
+        .reduce((sum, expense) => sum + (Number(expense.amount) || 0), 0);
 
       return {
         category,
         amount: total,
-        percentage: overallExpenseAmount ? (total / overallExpenseAmount) * 100 : 0,
-      }
-    })
+        percentage: overallExpenseAmount
+          ? (total / overallExpenseAmount) * 100
+          : 0,
+      };
+    });
 
   const handleVoiceExpenseDetected = async (newExpense) => {
     const savedExpense = await addExpense({
@@ -62,62 +68,59 @@ const Expenses = () => {
       note: newExpense.note || newExpense.merchant || "Voice input",
       date: newExpense.date || new Date().toISOString().split("T")[0],
       merchant: newExpense.merchant,
-    })
+    });
 
     if (!savedExpense) {
-      alert("Could not save this expense right now.")
+      alert("Could not save this expense right now.");
     }
-  }
+  };
 
   const handleQuickAdd = async () => {
-    const amountRaw = window.prompt("Enter amount (numbers only)")
-    if (!amountRaw) return
+    const amountRaw = window.prompt("Enter amount (numbers only)");
+    if (!amountRaw) return;
 
-    const amount = parseFloat(amountRaw.replace(/[^0-9.]/g, ""))
+    const amount = parseFloat(amountRaw.replace(/[^0-9.]/g, ""));
     if (Number.isNaN(amount) || amount <= 0) {
-      alert("Invalid amount")
-      return
+      alert("Invalid amount");
+      return;
     }
 
     const category =
-      window.prompt("Category (e.g. Food & Dining)", "Food & Dining") || "Other"
-    const note = window.prompt("Note (optional)", "") || ""
+      window.prompt("Category (e.g. Food & Dining)", "Food & Dining") ||
+      "Other";
+    const note = window.prompt("Note (optional)", "") || "";
 
     const savedExpense = await addExpense({
       amount,
       category,
       note,
       date: new Date().toISOString().split("T")[0],
-    })
+    });
 
     if (!savedExpense) {
-      alert("Could not save this expense right now.")
+      alert("Could not save this expense right now.");
     }
-  }
+  };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Delete this expense?")) return
-    const deleted = await deleteExpense(id)
+    if (!window.confirm("Delete this expense?")) return;
+    const deleted = await deleteExpense(id);
 
     if (!deleted) {
-      alert("Could not delete this expense right now.")
+      alert("Could not delete this expense right now.");
     }
-  }
+  };
 
   return (
     <div className="space-y-6">
       <ToastContainer />
-
       <div className="theme-hero rounded-2xl p-6 shadow-lg">
         <h1 className="text-3xl font-bold">Expenses</h1>
         <p className="mt-2 opacity-90">
           View, manage, and optimize your spending patterns
         </p>
       </div>
-
       <VoiceRecorder onExpenseDetected={handleVoiceExpenseDetected} />
-
-      <SmartExpenseAnalyzer expenses={categoryExpenses} />
 
       <div className="space-y-4">
         <div className="flex items-center justify-between">
@@ -221,7 +224,7 @@ const Expenses = () => {
         </section>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default Expenses
+export default Expenses;

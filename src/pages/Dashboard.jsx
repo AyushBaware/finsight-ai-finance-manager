@@ -10,8 +10,6 @@ import {
 import Card from "../components/ui/Card"
 import Button from "../components/ui/Button"
 import AISuggestions from "../components/common/AISuggestions"
-import SmartAIAdvisor from "../components/common/SmartAIAdvisor"
-import LifestyleExpenseTracker from "../components/common/LifestyleExpenseTracker"
 import QuickAddExpenseModal from "../components/common/QuickAddExpenseModal"
 import { useExpenses } from "../context/ExpensesContext"
 import settingsService from "../services/settingsService"
@@ -135,12 +133,6 @@ const Dashboard = () => {
 
       <AISuggestions financialData={financialData} />
 
-      <SmartAIAdvisor
-        leftoverMoney={leftoverMoney}
-        riskTolerance={financialData.riskTolerance}
-        expenses={financialData.expenses}
-      />
-
       <section>
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
@@ -182,8 +174,6 @@ const Dashboard = () => {
           )}
         </div>
       </section>
-
-      <LifestyleExpenseTracker />
 
       <QuickAddExpenseModal
         isOpen={isAddExpenseOpen}

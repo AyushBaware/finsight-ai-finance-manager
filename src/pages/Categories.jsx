@@ -6,21 +6,11 @@ import Button from "../components/ui/Button"
 import Input from "../components/ui/Input"
 import Modal from "../components/ui/Modal"
 import { useExpenses } from "../context/ExpensesContext"
-
-const initialCategories = [
-  { id: 1, name: "Food & Dining", emoji: "Meal" },
-  { id: 2, name: "Transport", emoji: "Ride" },
-  { id: 3, name: "Shopping", emoji: "Shop" },
-  { id: 4, name: "Utilities", emoji: "Bill" },
-  { id: 5, name: "Entertainment", emoji: "Fun" },
-  { id: 6, name: "Healthcare", emoji: "Care" },
-  { id: 7, name: "Subscription", emoji: "Plan" },
-  { id: 8, name: "Other", emoji: "Misc" },
-]
+import categoriesService from "../services/categoriesService"
 
 const Categories = () => {
   const { expenses } = useExpenses()
-  const [categories, setCategories] = useState(initialCategories)
+  const [categories, setCategories] = useState(() => categoriesService.getCategories())
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [newCategory, setNewCategory] = useState({ name: "", emoji: "Misc" })
 
@@ -31,25 +21,30 @@ const Categories = () => {
   }
 
   const handleAddCategory = () => {
-    if (!newCategory.name.trim()) return
+  if (!newCategory.name.trim()) return
 
-    const nextId =
-      categories.length > 0 ? Math.max(...categories.map((category) => category.id)) + 1 : 1
-    setCategories((previous) => [
-      ...previous,
-      {
-        id: nextId,
-        name: newCategory.name.trim(),
-        emoji: newCategory.emoji.trim() || "Misc",
-      },
-    ])
-    setNewCategory({ name: "", emoji: "Misc" })
-    setIsModalOpen(false)
-  }
+  const nextId =
+    categories.length > 0 ? Math.max(...categories.map((category) => category.id)) + 1 : 1
+  const nextCategories = [
+    ...categories,
+    {
+      id: nextId,
+      name: newCategory.name.trim(),
+      emoji: newCategory.emoji.trim() || "Misc",
+    },
+  ]
+  setCategories(nextCategories)
+  categoriesService.saveCategories(nextCategories)   // ✅ persist
+  setNewCategory({ name: "", emoji: "Misc" })
+  setIsModalOpen(false)
+}
 
-  const handleDeleteCategory = (id) => {
-    setCategories((previous) => previous.filter((category) => category.id !== id))
-  }
+const handleDeleteCategory = (id) => {
+  const nextCategories = categories.filter((category) => category.id !== id)
+  setCategories(nextCategories)
+  categoriesService.saveCategories(nextCategories)   // ✅ persist
+}
+
   return (
     <div className="space-y-6">
       <div className="theme-hero rounded-2xl p-6 shadow-lg">

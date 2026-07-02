@@ -1,65 +1,68 @@
-import { useState, useMemo } from "react"
-import Card from "../ui/Card"
-import Button from "../ui/Button"
-import { TrendingUp, Calendar, Zap, Target } from "lucide-react"
+import { useState, useMemo } from "react";
+import Card from "../ui/Card";
+import Button from "../ui/Button";
+import { TrendingUp, Calendar, Zap, Target } from "lucide-react";
 
-const WealthProjectionCalculator = ({ monthlyIncome = 45000, currentSavings = 100000 }) => {
-  const [investmentAmount, setInvestmentAmount] = useState(monthlyIncome * 0.3)
-  const [expectedROI, setExpectedROI] = useState(9)
-  const [years, setYears] = useState(30)
-  const [inflationRate, setInflationRate] = useState(5)
+const WealthProjectionCalculator = ({
+  monthlyIncome = 45000,
+  currentSavings = 100000,
+  onFindFunds,
+}) => {
+  const [investmentAmount, setInvestmentAmount] = useState(monthlyIncome * 0.3);
+  const [expectedROI, setExpectedROI] = useState(9);
+  const [years, setYears] = useState(30);
+  const [inflationRate, setInflationRate] = useState(5);
 
   // Calculate wealth projection
   const projection = useMemo(() => {
-    let balance = currentSavings
+    let balance = currentSavings;
 
-    const yearlyData = []
+    const yearlyData = [];
 
     for (let year = 1; year <= years; year++) {
       // Add monthly investments
-      balance += investmentAmount * 12
+      balance += investmentAmount * 12;
 
       // Apply ROI
-      balance = balance * (1 + expectedROI / 100)
+      balance = balance * (1 + expectedROI / 100);
 
       // Adjust for inflation (purchasing power)
-      const purchasingPower =
-        balance / Math.pow(1 + inflationRate / 100, year)
+      const purchasingPower = balance / Math.pow(1 + inflationRate / 100, year);
 
       yearlyData.push({
         year,
         balance: Math.floor(balance),
         purchasingPower: Math.floor(purchasingPower),
         monthlyInvestment: investmentAmount,
-      })
+      });
     }
 
-    const finalBalance = Math.floor(balance)
+    const finalBalance = Math.floor(balance);
     const finalPurchasingPower = Math.floor(
-      balance / Math.pow(1 + inflationRate / 100, years)
-    )
-    const totalInvested = currentSavings + investmentAmount * 12 * years
-    const totalGains = finalBalance - totalInvested
+      balance / Math.pow(1 + inflationRate / 100, years),
+    );
+    const totalInvested = currentSavings + investmentAmount * 12 * years;
+    const totalGains = finalBalance - totalInvested;
 
     // Calculate milestones
     const milestones = [
       { target: 10000000, label: "₹1 Crore" },
       { target: 5000000, label: "₹50 Lakhs" },
       { target: 1000000, label: "₹10 Lakhs" },
-    ]
+    ];
 
     const achievedMilestones = milestones
       .filter((m) => finalBalance >= m.target)
       .map((m) => {
-        let yearToAchieve = 0
+        let yearToAchieve = 0;
         for (const year of yearlyData) {
           if (year.balance >= m.target) {
-            yearToAchieve = year.year
-            break
+            yearToAchieve = year.year;
+            break;
           }
         }
-        return { ...m, year: yearToAchieve }
-      })
+        return { ...m, year: yearToAchieve };
+      });
 
     return {
       yearlyData,
@@ -69,35 +72,35 @@ const WealthProjectionCalculator = ({ monthlyIncome = 45000, currentSavings = 10
       totalGains,
       roi: ((totalGains / totalInvested) * 100).toFixed(2),
       achievedMilestones,
-    }
-  }, [investmentAmount, expectedROI, years, inflationRate, currentSavings])
+    };
+  }, [investmentAmount, expectedROI, years, inflationRate, currentSavings]);
 
   // Generate AI recommendation
   const getRecommendation = () => {
-    const _savingsRate = (investmentAmount / monthlyIncome) * 100
+    const _savingsRate = (investmentAmount / monthlyIncome) * 100;
 
     if (projection.finalBalance >= 10000000) {
       return {
         title: "🎯 Excellent Wealth Building!",
         message: `You're on track to build ₹${(projection.finalBalance / 10000000).toFixed(1)} Crore in ${years} years!`,
         action: "Consider adding more to accelerate wealth creation",
-      }
+      };
     } else if (projection.finalBalance >= 5000000) {
       return {
         title: "💪 Strong Financial Future",
         message: `You'll accumulate ₹${(projection.finalBalance / 100000).toFixed(0)} Lakhs in ${years} years`,
         action: "Increase monthly investment to reach ₹1 Crore milestone",
-      }
+      };
     } else {
       return {
         title: "💡 Increase Your Investment",
         message: `Current monthly investment of ₹${Math.floor(investmentAmount).toLocaleString()} will give ₹${(projection.finalBalance / 100000).toFixed(1)} Lakhs`,
         action: "Aim to increase monthly investment to ₹20,000+",
-      }
+      };
     }
-  }
+  };
 
-  const recommendation = getRecommendation()
+  const recommendation = getRecommendation();
 
   return (
     <div className="space-y-6">
@@ -116,7 +119,10 @@ const WealthProjectionCalculator = ({ monthlyIncome = 45000, currentSavings = 10
       </div>
 
       {/* Input Controls */}
-      <Card padding="lg" className="bg-linear-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20">
+      <Card
+        padding="lg"
+        className="bg-linear-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20"
+      >
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -129,7 +135,9 @@ const WealthProjectionCalculator = ({ monthlyIncome = 45000, currentSavings = 10
               <input
                 type="number"
                 value={Math.floor(investmentAmount)}
-                onChange={(e) => setInvestmentAmount(parseFloat(e.target.value) || 0)}
+                onChange={(e) =>
+                  setInvestmentAmount(parseFloat(e.target.value) || 0)
+                }
                 className="w-full pl-8 pr-4 py-2 border border-green-200 dark:border-green-800 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500"
               />
             </div>
@@ -151,7 +159,11 @@ const WealthProjectionCalculator = ({ monthlyIncome = 45000, currentSavings = 10
               className="w-full px-4 py-2 border border-green-200 dark:border-green-800 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500"
             />
             <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
-              {expectedROI < 5 ? "Conservative" : expectedROI < 10 ? "Balanced" : "Aggressive"}
+              {expectedROI < 5
+                ? "Conservative"
+                : expectedROI < 10
+                  ? "Balanced"
+                  : "Aggressive"}
             </p>
           </div>
 
@@ -181,7 +193,9 @@ const WealthProjectionCalculator = ({ monthlyIncome = 45000, currentSavings = 10
               min="0"
               max="20"
               value={inflationRate}
-              onChange={(e) => setInflationRate(parseFloat(e.target.value) || 0)}
+              onChange={(e) =>
+                setInflationRate(parseFloat(e.target.value) || 0)
+              }
               className="w-full px-4 py-2 border border-green-200 dark:border-green-800 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500"
             />
             <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
@@ -192,7 +206,10 @@ const WealthProjectionCalculator = ({ monthlyIncome = 45000, currentSavings = 10
       </Card>
 
       {/* AI Recommendation */}
-      <Card padding="lg" className="bg-linear-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border-l-4 border-l-purple-500">
+      <Card
+        padding="lg"
+        className="bg-linear-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border-l-4 border-l-purple-500"
+      >
         <div className="flex items-start gap-3">
           <span className="text-3xl">✨</span>
           <div className="flex-1">
@@ -211,8 +228,13 @@ const WealthProjectionCalculator = ({ monthlyIncome = 45000, currentSavings = 10
 
       {/* Key Metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card padding="lg" className="bg-linear-to-br from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20">
-          <p className="text-xs text-gray-600 dark:text-gray-400">Final Balance</p>
+        <Card
+          padding="lg"
+          className="bg-linear-to-br from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20"
+        >
+          <p className="text-xs text-gray-600 dark:text-gray-400">
+            Final Balance
+          </p>
           <h3 className="mt-2 text-2xl font-bold text-blue-600 dark:text-blue-400">
             ₹{projection.finalBalance.toLocaleString()}
           </h3>
@@ -221,8 +243,13 @@ const WealthProjectionCalculator = ({ monthlyIncome = 45000, currentSavings = 10
           </p>
         </Card>
 
-        <Card padding="lg" className="bg-linear-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20">
-          <p className="text-xs text-gray-600 dark:text-gray-400">Total Gains</p>
+        <Card
+          padding="lg"
+          className="bg-linear-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20"
+        >
+          <p className="text-xs text-gray-600 dark:text-gray-400">
+            Total Gains
+          </p>
           <h3 className="mt-2 text-2xl font-bold text-green-600 dark:text-green-400">
             ₹{projection.totalGains.toLocaleString()}
           </h3>
@@ -231,7 +258,10 @@ const WealthProjectionCalculator = ({ monthlyIncome = 45000, currentSavings = 10
           </p>
         </Card>
 
-        <Card padding="lg" className="bg-linear-to-br from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20">
+        <Card
+          padding="lg"
+          className="bg-linear-to-br from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20"
+        >
           <p className="text-xs text-gray-600 dark:text-gray-400">
             Purchasing Power
           </p>
@@ -243,8 +273,13 @@ const WealthProjectionCalculator = ({ monthlyIncome = 45000, currentSavings = 10
           </p>
         </Card>
 
-        <Card padding="lg" className="bg-linear-to-br from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20">
-          <p className="text-xs text-gray-600 dark:text-gray-400">Total Invested</p>
+        <Card
+          padding="lg"
+          className="bg-linear-to-br from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20"
+        >
+          <p className="text-xs text-gray-600 dark:text-gray-400">
+            Total Invested
+          </p>
           <h3 className="mt-2 text-2xl font-bold text-orange-600 dark:text-orange-400">
             ₹{projection.totalInvested.toLocaleString()}
           </h3>
@@ -308,11 +343,20 @@ const WealthProjectionCalculator = ({ monthlyIncome = 45000, currentSavings = 10
               {projection.yearlyData
                 .filter((data) => data.year % 5 === 0 || data.year === 1)
                 .map((data, idx) => {
-                  const prevBalance = idx === 0 ? currentSavings : projection.yearlyData[(data.year - 6) * (data.year <= 5 ? 1 : 1)]?.balance || 0
-                  const growth = ((data.balance - prevBalance) / prevBalance) * 100
+                  const prevBalance =
+                    idx === 0
+                      ? currentSavings
+                      : projection.yearlyData[
+                          (data.year - 6) * (data.year <= 5 ? 1 : 1)
+                        ]?.balance || 0;
+                  const growth =
+                    ((data.balance - prevBalance) / prevBalance) * 100;
 
                   return (
-                    <tr key={idx} className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                    <tr
+                      key={idx}
+                      className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50"
+                    >
                       <td className="py-3 px-2 text-gray-900 dark:text-white font-medium">
                         Year {data.year}
                       </td>
@@ -326,7 +370,7 @@ const WealthProjectionCalculator = ({ monthlyIncome = 45000, currentSavings = 10
                         {growth.toFixed(1)}%
                       </td>
                     </tr>
-                  )
+                  );
                 })}
             </tbody>
           </table>
@@ -334,16 +378,13 @@ const WealthProjectionCalculator = ({ monthlyIncome = 45000, currentSavings = 10
       </Card>
 
       {/* Call to Action */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Button className="w-full" variant="primary">
-          Start Your Wealth Journey
-        </Button>
-        <Button className="w-full" variant="secondary">
-          Download Projection Report
+      <div className="grid grid-cols-1 gap-4">
+        <Button className="w-full" variant="primary" onClick={onFindFunds}>
+          Find Matching Funds
         </Button>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default WealthProjectionCalculator
+export default WealthProjectionCalculator;

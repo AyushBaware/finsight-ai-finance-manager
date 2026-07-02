@@ -1,78 +1,81 @@
-import { useEffect, useState } from "react"
-import { BarChart3, PieChart as PieChartIcon } from "lucide-react"
+import { useEffect, useState, useRef } from "react";
+import { BarChart3, PieChart as PieChartIcon } from "lucide-react";
 
-import Card from "../components/ui/Card"
-import InvestmentSimulator from "../components/common/InvestmentSimulator"
-import FinancialGoalPlanner from "../components/common/FinancialGoalPlanner"
-import WealthProjectionCalculator from "../components/common/WealthProjectionCalculator"
-import { useExpenses } from "../context/ExpensesContext"
-import GoalBasedInvestmentPlanner from "../components/common/GoalBasedInvestmentPlanner"
-import settingsService from "../services/settingsService"
+import Card from "../components/ui/Card";
+import WealthProjectionCalculator from "../components/common/WealthProjectionCalculator";
+import { useExpenses } from "../context/ExpensesContext";
+import GoalBasedInvestmentPlanner from "../components/common/GoalBasedInvestmentPlanner";
+import settingsService from "../services/settingsService";
 
 const Analytics = () => {
-  const { expenses } = useExpenses()
+  const { expenses } = useExpenses();
   const [monthlyIncome, setMonthlyIncome] = useState(
     Number(settingsService.getMonthlyIncome()) || 0,
-  )
+  );
+
+  const plannerRef = useRef(null);
+  const scrollToPlanner = () =>
+    plannerRef.current?.scrollIntoView({ behavior: "smooth" });
 
   const calculateStats = (expenseList) => {
-    const today = new Date()
-    const currentMonth = today.getMonth()
-    const currentYear = today.getFullYear()
+    const today = new Date();
+    const currentMonth = today.getMonth();
+    const currentYear = today.getFullYear();
 
     const monthExpenses = (expenseList || []).filter((expense) => {
-      const expenseDate = new Date(expense.date)
-      if (Number.isNaN(expenseDate.getTime())) return false
+      const expenseDate = new Date(expense.date);
+      if (Number.isNaN(expenseDate.getTime())) return false;
 
       return (
         expenseDate.getMonth() === currentMonth &&
         expenseDate.getFullYear() === currentYear
-      )
-    })
+      );
+    });
 
     const weeklyBreakdown = {
       "Week 1 (1-7)": 0,
       "Week 2 (8-14)": 0,
       "Week 3 (15-21)": 0,
       "Week 4+ (22+)": 0,
-    }
+    };
 
-    const categoryBreakdown = {}
-    let total = 0
+    const categoryBreakdown = {};
+    let total = 0;
 
     monthExpenses.forEach((expense) => {
-      const day = Number(String(expense.date || "").split("-")[2]) || 1
-      const amount = Number(expense.amount) || 0
-      const categoryName = expense.category || "Other"
+      const day = Number(String(expense.date || "").split("-")[2]) || 1;
+      const amount = Number(expense.amount) || 0;
+      const categoryName = expense.category || "Other";
 
-      if (day <= 7) weeklyBreakdown["Week 1 (1-7)"] += amount
-      else if (day <= 14) weeklyBreakdown["Week 2 (8-14)"] += amount
-      else if (day <= 21) weeklyBreakdown["Week 3 (15-21)"] += amount
-      else weeklyBreakdown["Week 4+ (22+)"] += amount
+      if (day <= 7) weeklyBreakdown["Week 1 (1-7)"] += amount;
+      else if (day <= 14) weeklyBreakdown["Week 2 (8-14)"] += amount;
+      else if (day <= 21) weeklyBreakdown["Week 3 (15-21)"] += amount;
+      else weeklyBreakdown["Week 4+ (22+)"] += amount;
 
-      categoryBreakdown[categoryName] = (categoryBreakdown[categoryName] || 0) + amount
-      total += amount
-    })
+      categoryBreakdown[categoryName] =
+        (categoryBreakdown[categoryName] || 0) + amount;
+      total += amount;
+    });
 
-    return { totalExpenses: total, weeklyBreakdown, categoryBreakdown }
-  }
+    return { totalExpenses: total, weeklyBreakdown, categoryBreakdown };
+  };
 
   useEffect(() => {
     const handleSettingsUpdated = (event) => {
-      const { settings } = event.detail || {}
-      if (settings?.monthlyIncome == null) return
-      setMonthlyIncome(Number(settings.monthlyIncome) || 0)
-    }
+      const { settings } = event.detail || {};
+      if (settings?.monthlyIncome == null) return;
+      setMonthlyIncome(Number(settings.monthlyIncome) || 0);
+    };
 
-    window.addEventListener("settingsUpdated", handleSettingsUpdated)
+    window.addEventListener("settingsUpdated", handleSettingsUpdated);
 
     return () => {
-      window.removeEventListener("settingsUpdated", handleSettingsUpdated)
-    }
-  }, [])
-  const monthlyStats = calculateStats(expenses)
+      window.removeEventListener("settingsUpdated", handleSettingsUpdated);
+    };
+  }, []);
+  const monthlyStats = calculateStats(expenses);
 
-  const leftoverMoney = monthlyIncome - monthlyStats.totalExpenses
+  const leftoverMoney = monthlyIncome - monthlyStats.totalExpenses;
 
   return (
     <div className="space-y-8">
@@ -93,13 +96,17 @@ const Analytics = () => {
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <Card padding="lg">
           <div>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Monthly Expenses</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Monthly Expenses
+            </p>
             <h3 className="mt-2 text-2xl font-bold text-gray-900 dark:text-white">
               Rs {monthlyStats.totalExpenses.toLocaleString()}
             </h3>
             <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
               {monthlyIncome
-                ? ((monthlyStats.totalExpenses / monthlyIncome) * 100).toFixed(1)
+                ? ((monthlyStats.totalExpenses / monthlyIncome) * 100).toFixed(
+                    1,
+                  )
                 : 0}
               % of income
             </p>
@@ -108,13 +115,17 @@ const Analytics = () => {
 
         <Card padding="lg">
           <div>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Leftover Money</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Leftover Money
+            </p>
             <h3 className="mt-2 text-2xl font-bold text-green-600 dark:text-green-400">
               Rs {leftoverMoney.toLocaleString()}
             </h3>
             <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
-              {monthlyIncome ? ((leftoverMoney / monthlyIncome) * 100).toFixed(1) : 0}% of
-              income
+              {monthlyIncome
+                ? ((leftoverMoney / monthlyIncome) * 100).toFixed(1)
+                : 0}
+              % of income
             </p>
           </div>
         </Card>
@@ -125,9 +136,14 @@ const Analytics = () => {
               Annual Potential Growth
             </p>
             <h3 className="mt-2 text-2xl font-bold text-blue-600 dark:text-blue-400">
-              Rs {(leftoverMoney * 12 * 0.09).toLocaleString("en-IN", { maximumFractionDigits: 0 })}
+              Rs{" "}
+              {(leftoverMoney * 12 * 0.09).toLocaleString("en-IN", {
+                maximumFractionDigits: 0,
+              })}
             </h3>
-            <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">at 9% ROI</p>
+            <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
+              at 9% ROI
+            </p>
           </div>
         </Card>
       </section>
@@ -143,17 +159,20 @@ const Analytics = () => {
           </h3>
           <div className="space-y-3">
             {Object.entries(monthlyStats.categoryBreakdown || {})
-              .sort(([, leftAmount], [, rightAmount]) => rightAmount - leftAmount)
+              .sort(
+                ([, leftAmount], [, rightAmount]) => rightAmount - leftAmount,
+              )
               .slice(0, 5)
               .map(([category, amount], index) => {
-                const percentage = (amount / (monthlyStats.totalExpenses || 1)) * 100
+                const percentage =
+                  (amount / (monthlyStats.totalExpenses || 1)) * 100;
                 const colors = [
                   "bg-red-500",
                   "bg-orange-500",
                   "bg-yellow-500",
                   "bg-green-500",
                   "bg-blue-500",
-                ]
+                ];
 
                 return (
                   <div key={category || index}>
@@ -172,7 +191,7 @@ const Analytics = () => {
                       />
                     </div>
                   </div>
-                )
+                );
               })}
           </div>
         </Card>
@@ -186,31 +205,33 @@ const Analytics = () => {
             Weekly Spending Trends
           </h3>
           <div className="space-y-3">
-            {Object.entries(monthlyStats.weeklyBreakdown || {}).map(([week, amount], index) => {
-              const percentage = Math.min(
-                (amount / Math.max(monthlyStats.totalExpenses, 5000)) * 100,
-                100,
-              )
+            {Object.entries(monthlyStats.weeklyBreakdown || {}).map(
+              ([week, amount], index) => {
+                const percentage = Math.min(
+                  (amount / Math.max(monthlyStats.totalExpenses, 5000)) * 100,
+                  100,
+                );
 
-              return (
-                <div key={week || index}>
-                  <div className="mb-1 flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      {week}
-                    </span>
-                    <span className="text-sm font-bold text-gray-900 dark:text-white">
-                      Rs {amount.toLocaleString()}
-                    </span>
+                return (
+                  <div key={week || index}>
+                    <div className="mb-1 flex items-center justify-between">
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        {week}
+                      </span>
+                      <span className="text-sm font-bold text-gray-900 dark:text-white">
+                        Rs {amount.toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="h-3 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
+                      <div
+                        className="h-full bg-linear-to-r from-blue-500 to-cyan-500"
+                        style={{ width: `${percentage}%` }}
+                      />
+                    </div>
                   </div>
-                  <div className="h-3 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
-                    <div
-                      className="h-full bg-linear-to-r from-blue-500 to-cyan-500"
-                      style={{ width: `${percentage}%` }}
-                    />
-                  </div>
-                </div>
-              )
-            })}
+                );
+              },
+            )}
           </div>
         </Card>
       </section>
@@ -225,7 +246,10 @@ const Analytics = () => {
               Avg Daily
             </p>
             <p className="mt-1 text-lg font-bold text-gray-900 dark:text-white">
-              Rs {(monthlyStats.totalExpenses / 30).toLocaleString("en-IN", { maximumFractionDigits: 0 })}
+              Rs{" "}
+              {(monthlyStats.totalExpenses / 30).toLocaleString("en-IN", {
+                maximumFractionDigits: 0,
+              })}
             </p>
           </div>
           <div className="text-center">
@@ -233,7 +257,10 @@ const Analytics = () => {
               Avg Weekly
             </p>
             <p className="mt-1 text-lg font-bold text-gray-900 dark:text-white">
-              Rs {(monthlyStats.totalExpenses / 4).toLocaleString("en-IN", { maximumFractionDigits: 0 })}
+              Rs{" "}
+              {(monthlyStats.totalExpenses / 4).toLocaleString("en-IN", {
+                maximumFractionDigits: 0,
+              })}
             </p>
           </div>
           <div className="text-center">
@@ -241,7 +268,11 @@ const Analytics = () => {
               5-Yr Potential
             </p>
             <p className="mt-1 text-lg font-bold text-green-600 dark:text-green-400">
-              Rs {(leftoverMoney * 12 * Math.pow(1.09, 5)).toLocaleString("en-IN", { maximumFractionDigits: 0 })}
+              Rs{" "}
+              {(leftoverMoney * 12 * Math.pow(1.09, 5)).toLocaleString(
+                "en-IN",
+                { maximumFractionDigits: 0 },
+              )}
             </p>
           </div>
           <div className="text-center">
@@ -255,11 +286,14 @@ const Analytics = () => {
         </div>
       </Card>
 
-      <InvestmentSimulator leftoverMoney={leftoverMoney} />
-      <FinancialGoalPlanner />
-      <WealthProjectionCalculator monthlyIncome={monthlyIncome} currentSavings={100000} />
-
-      <GoalBasedInvestmentPlanner />
+      <WealthProjectionCalculator
+        monthlyIncome={monthlyIncome}
+        currentSavings={100000}
+        onFindFunds={scrollToPlanner}
+      />
+      <div ref={plannerRef}>
+        <GoalBasedInvestmentPlanner />
+      </div>
 
       <section className="grid gap-4 sm:grid-cols-2">
         <Card
@@ -275,9 +309,26 @@ const Analytics = () => {
                 With Rs {leftoverMoney.toLocaleString()} monthly savings:
               </p>
               <ul className="mt-2 space-y-1 text-sm text-gray-700 dark:text-gray-300">
-                <li>1 year: Rs {(leftoverMoney * 12 * 1.09).toLocaleString("en-IN", { maximumFractionDigits: 0 })}</li>
-                <li>5 years: Rs {(leftoverMoney * 12 * Math.pow(1.09, 5)).toLocaleString("en-IN", { maximumFractionDigits: 0 })}</li>
-                <li>10 years: Rs {(leftoverMoney * 12 * Math.pow(1.09, 10)).toLocaleString("en-IN", { maximumFractionDigits: 0 })}</li>
+                <li>
+                  1 year: Rs{" "}
+                  {(leftoverMoney * 12 * 1.09).toLocaleString("en-IN", {
+                    maximumFractionDigits: 0,
+                  })}
+                </li>
+                <li>
+                  5 years: Rs{" "}
+                  {(leftoverMoney * 12 * Math.pow(1.09, 5)).toLocaleString(
+                    "en-IN",
+                    { maximumFractionDigits: 0 },
+                  )}
+                </li>
+                <li>
+                  10 years: Rs{" "}
+                  {(leftoverMoney * 12 * Math.pow(1.09, 10)).toLocaleString(
+                    "en-IN",
+                    { maximumFractionDigits: 0 },
+                  )}
+                </li>
               </ul>
             </div>
           </div>
@@ -306,7 +357,7 @@ const Analytics = () => {
         </Card>
       </section>
     </div>
-  )
-}
+  );
+};
 
-export default Analytics
+export default Analytics;

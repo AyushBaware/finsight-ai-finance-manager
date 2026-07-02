@@ -6,7 +6,6 @@ import Sidebar from "./components/layout/Sidebar"
 import Header from "./components/layout/Header"
 import BottomNav from "./components/layout/BottomNav"
 import QuickAddExpenseModal from "./components/common/QuickAddExpenseModal"
-import ExpenseWidget from "./components/common/ExpenseWidget"
 import { ExpensesContext } from "./context/ExpensesContext"
 import { ThemeContext } from "./context/ThemeContext"
 import {
@@ -80,7 +79,6 @@ const AuthLayout = ({
       </main>
       <BottomNav onAddClick={onAddClick} />
     </div>
-    <ExpenseWidget />
     <QuickAddExpenseModal
       isOpen={isQuickAddOpen}
       onClose={() => setIsQuickAddOpen(false)}

@@ -3,24 +3,23 @@ import Card from "../ui/Card"
 import Button from "../ui/Button"
 import { PieChart, AlertTriangle, CheckCircle, TrendingDown } from "lucide-react"
 
-const SmartExpenseAnalyzer = ({ expenses = [] }) => {
+const SmartExpenseAnalyzer = ({ expenses = [], monthlyIncome = 0 }) => {
   const [selectedCategory, setSelectedCategory] = useState(null)
 
-  // Mock data if not provided
-  const expenseData = expenses.length > 0 ? expenses : [
-    { category: "Food & Dining", amount: 4200, percentage: 22.4 },
-    { category: "Entertainment", amount: 2500, percentage: 13.3 },
-    { category: "Shopping", amount: 3500, percentage: 18.7 },
-    { category: "Utilities", amount: 1800, percentage: 9.6 },
-    { category: "Transport", amount: 2000, percentage: 10.7 },
-    { category: "Subscription", amount: 750, percentage: 4.0 },
-    { category: "Healthcare", amount: 1500, percentage: 8.0 },
-    { category: "Other", amount: 1000, percentage: 5.3 },
-  ]
+  const expenseData = expenses
 
-  const monthlyIncome = 45000
   const totalExpenses = expenseData.reduce((sum, exp) => sum + exp.amount, 0)
-  const savingsRate = ((monthlyIncome - totalExpenses) / monthlyIncome) * 100
+  const savingsRate = monthlyIncome
+    ? ((monthlyIncome - totalExpenses) / monthlyIncome) * 100
+    : 0
+
+  if (expenseData.length === 0) {
+    return (
+      <Card padding="lg" className="text-center text-gray-500 dark:text-gray-400">
+        Add some expenses to see your analysis here.
+      </Card>
+    )
+  }
 
   // Analyze spending patterns
   const getAnalysis = (category) => {
