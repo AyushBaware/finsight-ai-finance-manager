@@ -6,6 +6,7 @@ import InvestmentSimulator from "../components/common/InvestmentSimulator"
 import FinancialGoalPlanner from "../components/common/FinancialGoalPlanner"
 import WealthProjectionCalculator from "../components/common/WealthProjectionCalculator"
 import { useExpenses } from "../context/ExpensesContext"
+import GoalBasedInvestmentPlanner from "../components/common/GoalBasedInvestmentPlanner"
 import settingsService from "../services/settingsService"
 
 const Analytics = () => {
@@ -257,6 +258,8 @@ const Analytics = () => {
       <InvestmentSimulator leftoverMoney={leftoverMoney} />
       <FinancialGoalPlanner />
       <WealthProjectionCalculator monthlyIncome={monthlyIncome} currentSavings={100000} />
+
+      <GoalBasedInvestmentPlanner />
 
       <section className="grid gap-4 sm:grid-cols-2">
         <Card
