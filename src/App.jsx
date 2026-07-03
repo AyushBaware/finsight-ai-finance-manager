@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import { BrowserRouter, Route, Routes } from "react-router-dom"
 import { onAuthStateChanged } from "firebase/auth"
-
+import { checkBudgetThreshold } from "./utils/budgetAlerts"
 import Sidebar from "./components/layout/Sidebar"
 import Header from "./components/layout/Header"
 import BottomNav from "./components/layout/BottomNav"
@@ -306,7 +306,13 @@ function App() {
     return mutation()
   }
 
-  const handleAddExpense = (expense) => runExpenseMutation(() => createExpense(expense))
+  const handleAddExpense = async (expense) => {
+  const savedExpense = await runExpenseMutation(() => createExpense(expense))
+  if (savedExpense) {
+    checkBudgetThreshold(savedExpense.category, [...expenses, savedExpense])
+  }
+  return savedExpense
+}
   const handleUpdateExpense = (id, updates, existingExpense) =>
     runExpenseMutation(() => editExpense(id, updates, existingExpense))
   const handleDeleteExpense = (id) => runExpenseMutation(() => removeExpense(id))

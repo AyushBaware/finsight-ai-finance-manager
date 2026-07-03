@@ -1,14 +1,14 @@
 const CATEGORIES_KEY = "finsight_categories_v1"
 
 const defaultCategories = [
-  { id: 1, name: "Food & Dining", emoji: "Meal" },
-  { id: 2, name: "Transport", emoji: "Ride" },
-  { id: 3, name: "Shopping", emoji: "Shop" },
-  { id: 4, name: "Utilities", emoji: "Bill" },
-  { id: 5, name: "Entertainment", emoji: "Fun" },
-  { id: 6, name: "Healthcare", emoji: "Care" },
-  { id: 7, name: "Subscription", emoji: "Plan" },
-  { id: 8, name: "Other", emoji: "Misc" },
+  { id: 1, name: "Food & Dining", emoji: "Meal", monthlyLimit: null },
+  { id: 2, name: "Transport", emoji: "Ride", monthlyLimit: null },
+  { id: 3, name: "Shopping", emoji: "Shop", monthlyLimit: null },
+  { id: 4, name: "Utilities", emoji: "Bill", monthlyLimit: null },
+  { id: 5, name: "Entertainment", emoji: "Fun", monthlyLimit: null },
+  { id: 6, name: "Healthcare", emoji: "Care", monthlyLimit: null },
+  { id: 7, name: "Subscription", emoji: "Plan", monthlyLimit: null },
+  { id: 8, name: "Other", emoji: "Misc", monthlyLimit: null },
 ]
 
 function getCategories() {
@@ -33,8 +33,18 @@ function saveCategories(categories) {
   }
 }
 
+function updateCategoryLimit(id, limit) {
+  const categories = getCategories()
+  const nextCategories = categories.map((category) =>
+    category.id === id ? { ...category, monthlyLimit: limit } : category,
+  )
+  saveCategories(nextCategories)
+  return nextCategories
+}
+
 export default {
   getCategories,
   saveCategories,
+  updateCategoryLimit,
   defaultCategories,
 }
