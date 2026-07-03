@@ -1,8 +1,47 @@
 rules_version = '2';
+
+// These rules match FinSight's ACTUAL data model:
+//   - "expenses" is a TOP-LEVEL collection, each doc has a "userId" field
+//     (see src/services/dataService.js — EXPENSES_COLLECTION, queried with
+//     where("userId", "==", user.uid))
+//   - "users/{uid}" and "users/{uid}/settings/preferences" are nested docs
+//     (see src/services/themeService.js — getThemeSettingsRef, and the
+//     doc(db, "users", user.uid) call in Login.jsx)
+//
+// The previous rule ("allow read, write: if request.auth != null") let ANY
+// signed-in user read or overwrite ANY OTHER user's documents — this fixes
+// that by scoping every read/write to the document's actual owner.
+//
+// If you add new collections later (e.g. "recurringBills"), add a matching
+// block below — the catch-all deny at the bottom means a forgotten
+// collection fails safely closed instead of accidentally open.
+
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    // Top-level "expenses" collection — each doc must carry the owner's
+    // uid in a "userId" field, and only that owner may read/write it.
+    match /expenses/{expenseId} {
+      allow read, delete, update: if request.auth != null
+        && request.auth.uid == resource.data.userId;
+
+      allow create: if request.auth != null
+        && request.auth.uid == request.resource.data.userId;
+    }
+
+    // Per-user profile doc and any nested subcollections
+    // (e.g. users/{uid}/settings/preferences).
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+
+      match /{document=**} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+
+    // Default deny for anything not explicitly matched above.
     match /{document=**} {
-      allow read, write: if request.auth != null;
+      allow read, write: if false;
     }
   }
 }
