@@ -15,7 +15,24 @@
   --overlay-color: rgba(7, 15, 29, 0.56);
   --card-shadow: 0 24px 60px rgba(37, 99, 235, 0.14);
   --font-family: "Inter", "Segoe UI", sans-serif;
+
+  --shadow-sm: 0 1px 2px rgba(15, 21, 36, 0.06);
+  --shadow-md: 0 8px 24px rgba(30, 79, 216, 0.10);
+  --shadow-lg: 0 20px 48px rgba(30, 79, 216, 0.16);
 }
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Type scale discipline — Section 1.2 of the spec */
+.text-display { font-size: 32px; line-height: 40px; font-weight: 800; }
+.text-h1      { font-size: 24px; line-height: 32px; font-weight: 700; }
+.text-h2      { font-size: 18px; line-height: 26px; font-weight: 600; }
+.text-body    { font-size: 14px; line-height: 20px; font-weight: 400; }
+.text-body-strong { font-size: 14px; line-height: 20px; font-weight: 600; }
+.text-caption { font-size: 12px; line-height: 16px; font-weight: 500; }
+.text-micro   { font-size: 11px; line-height: 14px; font-weight: 500; }
 
 html,
 body,
