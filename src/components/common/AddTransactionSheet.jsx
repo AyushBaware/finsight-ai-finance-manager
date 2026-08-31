@@ -111,10 +111,10 @@ const AddTransactionSheet = ({ isOpen, onClose }) => {
                 >
                   {isListening ? <Square size={22} /> : <Mic size={22} />}
                 </button>
-                <p className="text-caption theme-muted-text">
+                <p className="text-caption" style={{ color: "#A0AEC0" }}>
                   {isListening ? "Listening..." : 'Tap and say e.g. "Spent 50 on lunch"'}
                 </p>
-                {transcript ? <p className="text-caption theme-muted-text italic">"{transcript}"</p> : null}
+                {transcript ? <p className="text-caption italic" style={{ color: "#A0AEC0" }}>"{transcript}"</p> : null}
                 {error ? <p className="text-caption" style={{ color: "var(--negative-color)" }}>{error}</p> : null}
               </div>
             ) : null}

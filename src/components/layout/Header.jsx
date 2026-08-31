@@ -29,13 +29,9 @@ const Header = ({ title, onMenuClick, onAddClick }) => {
           <Menu size={20} />
         </button>
 
-        <div className="hidden sm:block">
-          <BrandedHeader />
-        </div>
+        <div className="hidden sm:block" />
 
-        <div className="sm:hidden">
-          <h1 className="theme-text text-lg font-semibold">{title}</h1>
-        </div>
+        <div className="sm:hidden" />
       </div>
 
       <div className="flex items-center gap-3">
@@ -48,10 +44,12 @@ const Header = ({ title, onMenuClick, onAddClick }) => {
           </div>
         ) : null}
 
-        <Button size="sm" className="flex items-center gap-1" onClick={onAddClick}>
-          <Plus size={16} />
-          <span className="hidden sm:inline">Add</span>
-        </Button>
+        <div className="hidden sm:block">
+          <Button size="sm" className="flex items-center gap-1" onClick={onAddClick}>
+            <Plus size={16} />
+            <span>Add</span>
+          </Button>
+        </div>
       </div>
     </header>
   )

@@ -144,7 +144,17 @@ const Categories = () => {
                           Rs {spending.toLocaleString()} / {category.monthlyLimit.toLocaleString()}
                         </span>
                       </div>
-                      <div className="h-1.5 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
+                      <div
+                        className="h-1.5 w-full overflow-hidden rounded-full"
+                        style={{
+                          background:
+                            spending >= category.monthlyLimit
+                              ? "rgba(220, 38, 38, 0.12)"
+                              : spending >= category.monthlyLimit * 0.8
+                                ? "rgba(245, 158, 11, 0.15)"
+                                : "rgba(34, 197, 94, 0.12)",
+                        }}
+                      >
                         <div
                           className={`h-full transition-all ${
                             spending >= category.monthlyLimit

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
-import { PieChart } from "lucide-react"
+import { ArrowDownRight, ArrowUpRight, PieChart } from "lucide-react"
 import Card from "../components/ui/Card"
+import StatCard from "../components/ui/StatCard"
 import BudgetProgressBar from "../components/ui/BudgetProgressBar"
 import { useExpenses } from "../context/ExpensesContext"
 import settingsService from "../services/settingsService"
@@ -18,6 +19,8 @@ const Dashboard = () => {
   const leftoverMoney = financialData.monthlyIncome - financialData.totalExpenses
   const savingsRate = financialData.monthlyIncome
     ? ((leftoverMoney / financialData.monthlyIncome) * 100).toFixed(1) : "0.0"
+
+    const isOverBudget = leftoverMoney < 0
 
   // Show the two most urgent categories over budget & >50% used.
   const categories = categoriesService.getCategories()
@@ -46,43 +49,47 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-h1 theme-text">Welcome back</h1>
-        <p className="text-body theme-muted-text mt-1">Here's where things stand this month.</p>
-      </div>
+      {/* Hero: Leftover Money (full width) + Income / Expense side-by-side below it */}
+<section className="grid grid-cols-2 gap-4">
+  <StatCard
+    hero
+    tone={isOverBudget ? "negative" : "accent"}
+    label="Leftover this month"
+    value={`${isOverBudget ? "- " : ""}Rs ${Math.abs(leftoverMoney).toLocaleString()}`}
+    subtext={
+      isOverBudget
+        ? "You've spent more than you earned this month."
+        : "What's left after this month's expenses."
+    }
+    delta={isOverBudget ? "Over budget" : `${savingsRate}% saved`}
+  />
 
-      {/* Hero: Leftover Money, full width on mobile, 2fr on desktop */}
-      <section className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <div
-          className="rounded-3xl p-6 shadow-[var(--shadow-md)] lg:col-span-2"
-          style={{ background: "var(--accent-soft-color)" }}
-        >
-          <p className="text-caption theme-muted-text">Leftover this month</p>
-          <p className="tabular-nums text-display theme-text mt-1">
-            Rs {leftoverMoney.toLocaleString()}
-          </p>
+  <StatCard
+    label="Income"
+    value={`Rs ${financialData.monthlyIncome.toLocaleString()}`}
+    icon={
+      <span
+        className="flex h-8 w-8 items-center justify-center rounded-full"
+        style={{ background: "var(--positive-soft-color)" }}
+      >
+        <ArrowUpRight size={16} style={{ color: "var(--positive-color)" }} />
+      </span>
+    }
+  />
 
-          <div className="mt-5 flex gap-6">
-            <div>
-              <p className="text-caption theme-muted-text">Income</p>
-              <p className="tabular-nums text-body-strong theme-text">
-                Rs {financialData.monthlyIncome.toLocaleString()}
-              </p>
-            </div>
-            <div>
-              <p className="text-caption theme-muted-text">Expenses</p>
-              <p className="tabular-nums text-body-strong theme-text">
-                Rs {financialData.totalExpenses.toLocaleString()}
-              </p>
-            </div>
-            <div>
-              <p className="text-caption theme-muted-text">Savings rate</p>
-              <p className="tabular-nums text-body-strong theme-text">{savingsRate}%</p>
-            </div>
-          </div>
-        </div>
-
-      </section>
+  <StatCard
+    label="Expenses"
+    value={`Rs ${financialData.totalExpenses.toLocaleString()}`}
+    icon={
+      <span
+        className="flex h-8 w-8 items-center justify-center rounded-full"
+        style={{ background: "var(--negative-soft-color)" }}
+      >
+        <ArrowDownRight size={16} style={{ color: "var(--negative-color)" }} />
+      </span>
+    }
+  />
+</section>
 
       {/* Two slim budget strips — the most urgent categories */}
       {mostUrgentBudgets.length > 0 ? (
@@ -114,7 +121,7 @@ const Dashboard = () => {
               <div className="flex items-center justify-between">
                 <div className="flex-1">
                   <p className="text-body-strong theme-text">{expense.category}</p>
-                  <p className="text-caption theme-muted-text">
+                  <p className="text-caption" style={{ color: "#A0AEC0" }}>
                     {expense.note || "No note"} | {new Date(expense.date).toLocaleDateString()}
                   </p>
                 </div>
