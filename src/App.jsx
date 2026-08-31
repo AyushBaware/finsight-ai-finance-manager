@@ -5,7 +5,8 @@ import { checkBudgetThreshold } from "./utils/budgetAlerts"
 import Sidebar from "./components/layout/Sidebar"
 import Header from "./components/layout/Header"
 import BottomNav from "./components/layout/BottomNav"
-import QuickAddExpenseModal from "./components/common/QuickAddExpenseModal"
+import AddTransactionSheet from "./components/common/AddTransactionSheet"
+import { ToastContainer } from "./components/common/Toast"
 import { ExpensesContext } from "./context/ExpensesContext"
 import { ThemeContext } from "./context/ThemeContext"
 import {
@@ -53,36 +54,16 @@ const getOnlineState = () => {
   return navigator.onLine
 }
 
-const AuthLayout = ({
-  children,
-  user,
-  isSidebarOpen,
-  setIsSidebarOpen,
-  onAddClick,
-  isQuickAddOpen,
-  setIsQuickAddOpen,
-}) => (
+const AuthLayout = ({ children, user, isSidebarOpen, setIsSidebarOpen, onAddClick, isQuickAddOpen, setIsQuickAddOpen }) => (
   <div className="theme-shell flex min-h-screen">
-    <Sidebar
-      isOpen={isSidebarOpen}
-      onClose={() => setIsSidebarOpen(false)}
-      user={user}
-    />
+    <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} user={user} />
     <div className="flex flex-1 flex-col md:ml-64">
-      <Header
-        title="FinSight"
-        onMenuClick={() => setIsSidebarOpen(true)}
-        onAddClick={onAddClick}
-      />
-      <main className="theme-shell flex-1 overflow-y-auto p-4 pb-20 md:pb-4">
-        {children}
-      </main>
+      <Header title="FinSight" onMenuClick={() => setIsSidebarOpen(true)} onAddClick={onAddClick} />
+      <main className="theme-shell flex-1 overflow-y-auto p-4 pb-20 md:pb-4">{children}</main>
       <BottomNav onAddClick={onAddClick} />
     </div>
-    <QuickAddExpenseModal
-      isOpen={isQuickAddOpen}
-      onClose={() => setIsQuickAddOpen(false)}
-    />
+    <AddTransactionSheet isOpen={isQuickAddOpen} onClose={() => setIsQuickAddOpen(false)} />
+    <ToastContainer />
   </div>
 )
 
@@ -323,20 +304,22 @@ function App() {
   const visibleExpenses = isMatchingExpenseFeed ? expenses : []
 
   const expenseContextValue = {
-    addExpense: handleAddExpense,
-    deleteExpense: handleDeleteExpense,
-    expenses: visibleExpenses,
-    expenseError: isMatchingExpenseFeed ? expenseState.errorMessage : "",
-    expenseSource: expenseState.source,
-    fromCache: isMatchingExpenseFeed ? expenseState.fromCache : true,
-    hasPendingWrites: isMatchingExpenseFeed ? expenseState.hasPendingWrites : false,
-    isOnline,
-    isReady: isMatchingExpenseFeed && expenseState.isReady,
-    isSyncing: isMatchingExpenseFeed && expenseState.hasPendingWrites,
-    persistenceState,
-    updateExpense: handleUpdateExpense,
-    user,
-  }
+  addExpense: handleAddExpense,
+  deleteExpense: handleDeleteExpense,
+  expenses: visibleExpenses,
+  expenseError: isMatchingExpenseFeed ? expenseState.errorMessage : "",
+  expenseSource: expenseState.source,
+  fromCache: isMatchingExpenseFeed ? expenseState.fromCache : true,
+  hasPendingWrites: isMatchingExpenseFeed ? expenseState.hasPendingWrites : false,
+  isOnline,
+  isReady: isMatchingExpenseFeed && expenseState.isReady,
+  isSyncing: isMatchingExpenseFeed && expenseState.hasPendingWrites,
+  persistenceState,
+  updateExpense: handleUpdateExpense,
+  user,
+  openQuickAdd: () => setIsQuickAddOpen(true),   // NEW
+  closeQuickAdd: () => setIsQuickAddOpen(false), // NEW
+}
 
   return (
     <ThemeContext.Provider
