@@ -1,29 +1,27 @@
 import { useEffect, useState } from "react"
-import { PieChart, Plus, TrendingUp } from "lucide-react"
+import { PieChart } from "lucide-react"
 import Card from "../components/ui/Card"
-import Button from "../components/ui/Button"
 import BudgetProgressBar from "../components/ui/BudgetProgressBar"
-import AISuggestions from "../components/common/AISuggestions"
 import { useExpenses } from "../context/ExpensesContext"
 import settingsService from "../services/settingsService"
 import categoriesService from "../services/categoriesService"
 
 const Dashboard = () => {
-  const { expenses, openQuickAdd } = useExpenses()
+  const { expenses } = useExpenses()
   const initialSettings = settingsService.getSettings()
   const [monthlyIncome, setMonthlyIncome] = useState(Number(initialSettings.monthlyIncome) || 0)
   const [riskTolerance, setRiskTolerance] = useState(initialSettings.riskTolerance)
 
   const totalExpenses = expenses.reduce((sum, e) => sum + (Number(e.amount) || 0), 0)
-  const recentExpenses = expenses.slice(0, 5)
+  const recentExpenses = expenses.slice(0, 10)
   const financialData = { monthlyIncome, totalExpenses, expenses, savingsGoal: 5000, riskTolerance }
   const leftoverMoney = financialData.monthlyIncome - financialData.totalExpenses
   const savingsRate = financialData.monthlyIncome
     ? ((leftoverMoney / financialData.monthlyIncome) * 100).toFixed(1) : "0.0"
 
-  // Most urgent category over budget & >50% used — spec says show one, not all.
+  // Show the two most urgent categories over budget & >50% used.
   const categories = categoriesService.getCategories()
-  const mostUrgentBudget = categories
+  const mostUrgentBudgets = categories
     .filter((c) => c.monthlyLimit)
     .map((c) => {
       const spent = expenses
@@ -32,7 +30,8 @@ const Dashboard = () => {
       return { ...c, spent, percent: (spent / c.monthlyLimit) * 100 }
     })
     .filter((c) => c.percent > 50)
-    .sort((a, b) => b.percent - a.percent)[0]
+    .sort((a, b) => b.percent - a.percent)
+    .slice(0, 2)
 
   useEffect(() => {
     const handleSettingsUpdated = (event) => {
@@ -83,41 +82,30 @@ const Dashboard = () => {
           </div>
         </div>
 
-        <Card padding="lg" className="flex flex-col justify-center gap-1">
-          <div className="flex items-center gap-2 theme-accent-text">
-            <TrendingUp size={18} />
-            <span className="text-caption theme-muted-text">Quick action</span>
-          </div>
-          <Button onClick={openQuickAdd} className="mt-2 flex items-center justify-center gap-2 w-full">
-            <Plus size={16} />
-            Add Expense
-          </Button>
-          <Button variant="ghost" className="w-full">View Analytics</Button>
-        </Card>
       </section>
 
-      {/* One slim budget strip — most urgent category only, per spec */}
-      {mostUrgentBudget ? (
-        <Card padding="lg">
-          <div className="mb-1 flex items-center gap-2">
-            <PieChart size={16} className="theme-accent-text" />
-            <span className="text-caption theme-muted-text">Budget check</span>
-          </div>
-          <BudgetProgressBar
-            label={mostUrgentBudget.name}
-            spent={mostUrgentBudget.spent}
-            limit={mostUrgentBudget.monthlyLimit}
-          />
-        </Card>
+      {/* Two slim budget strips — the most urgent categories */}
+      {mostUrgentBudgets.length > 0 ? (
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          {mostUrgentBudgets.map((budget) => (
+            <Card key={budget.name} padding="lg">
+              <div className="mb-1 flex items-center gap-2">
+                <PieChart size={16} className="theme-accent-text" />
+                <span className="text-caption theme-muted-text">Budget check</span>
+              </div>
+              <BudgetProgressBar
+                label={budget.name}
+                spent={budget.spent}
+                limit={budget.monthlyLimit}
+              />
+            </Card>
+          ))}
+        </div>
       ) : null}
-
-      {/* AI Suggestions demoted below the fold, per spec */}
-      <AISuggestions financialData={financialData} />
 
       <section>
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-h2 theme-text">Recent Expenses</h2>
-          <button className="text-caption theme-accent-text hover:underline">View all</button>
         </div>
 
         <div className="space-y-2">

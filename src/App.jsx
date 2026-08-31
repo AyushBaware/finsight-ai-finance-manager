@@ -39,6 +39,7 @@ import {
   addExpense as createExpense,
   deleteExpense as removeExpense,
   EXPENSES_SYNC_ERROR_EVENT,
+  getGuestExpenses,
   subscribeToExpenses,
   updateExpense as editExpense,
 } from "./services/dataService"
@@ -71,7 +72,7 @@ function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false)
   const [user, setUser] = useState(null)
-  const [isAuthReady, setIsAuthReady] = useState(false)
+  const [isAuthReady, setIsAuthReady] = useState(true)
   const [systemMode, setSystemMode] = useState(getSystemMode)
   const [themePreference, setThemePreference] = useState(getStoredThemePreference)
   const [expenses, setExpenses] = useState([])
@@ -185,6 +186,20 @@ function App() {
   useEffect(() => {
     if (!isAuthReady) return undefined
 
+    if (!user?.uid) {
+      const guestExpenses = getGuestExpenses()
+      setExpenses(Array.isArray(guestExpenses) ? guestExpenses : [])
+      setExpenseState({
+        errorMessage: "",
+        fromCache: true,
+        hasPendingWrites: false,
+        isReady: true,
+        source: "guest",
+        userId: null,
+      })
+      return () => {}
+    }
+
     return subscribeToExpenses(
       user,
       (nextExpenses, metadata = {}) => {
@@ -194,8 +209,8 @@ function App() {
           fromCache: Boolean(metadata.fromCache),
           hasPendingWrites: Boolean(metadata.hasPendingWrites),
           isReady: true,
-          source: metadata.source || (user?.uid ? "cloud" : "guest"),
-          userId: metadata.userId ?? null,
+          source: metadata.source || "cloud",
+          userId: metadata.userId ?? user.uid,
         })
       },
       (error) => {
@@ -203,7 +218,7 @@ function App() {
           ...previous,
           errorMessage: error?.message || "Could not sync expenses right now.",
           isReady: true,
-          source: user?.uid ? "cloud" : "guest",
+          source: "cloud",
           userId: user?.uid ?? null,
         }))
       },
@@ -299,26 +314,29 @@ function App() {
   const handleDeleteExpense = (id) => runExpenseMutation(() => removeExpense(id))
   const activeExpenseSource = user?.uid ? "cloud" : "guest"
   const activeExpenseOwnerId = user?.uid ?? null
-  const isMatchingExpenseFeed =
-    expenseState.source === activeExpenseSource && expenseState.userId === activeExpenseOwnerId
-  const visibleExpenses = isMatchingExpenseFeed ? expenses : []
+  const sourceMatchesCurrentUser =
+    expenseState.source === activeExpenseSource &&
+    (activeExpenseSource === "guest"
+      ? expenseState.userId == null || expenseState.userId === activeExpenseOwnerId
+      : expenseState.userId === activeExpenseOwnerId)
+  const visibleExpenses = expenseState.isReady && sourceMatchesCurrentUser ? expenses : expenses
 
   const expenseContextValue = {
   addExpense: handleAddExpense,
   deleteExpense: handleDeleteExpense,
   expenses: visibleExpenses,
-  expenseError: isMatchingExpenseFeed ? expenseState.errorMessage : "",
+  expenseError: expenseState.errorMessage,
   expenseSource: expenseState.source,
-  fromCache: isMatchingExpenseFeed ? expenseState.fromCache : true,
-  hasPendingWrites: isMatchingExpenseFeed ? expenseState.hasPendingWrites : false,
+  fromCache: expenseState.fromCache,
+  hasPendingWrites: expenseState.hasPendingWrites,
   isOnline,
-  isReady: isMatchingExpenseFeed && expenseState.isReady,
-  isSyncing: isMatchingExpenseFeed && expenseState.hasPendingWrites,
+  isReady: expenseState.isReady,
+  isSyncing: expenseState.hasPendingWrites,
   persistenceState,
   updateExpense: handleUpdateExpense,
   user,
-  openQuickAdd: () => setIsQuickAddOpen(true),   // NEW
-  closeQuickAdd: () => setIsQuickAddOpen(false), // NEW
+  openQuickAdd: () => setIsQuickAddOpen(true),
+  closeQuickAdd: () => setIsQuickAddOpen(false),
 }
 
   return (

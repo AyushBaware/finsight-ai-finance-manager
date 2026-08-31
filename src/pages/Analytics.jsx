@@ -1,285 +1,297 @@
-import { useEffect, useState, useRef } from "react";
-import { BarChart3, PieChart as PieChartIcon } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react"
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts"
+import { BarChart3, PieChart as PieChartIcon } from "lucide-react"
 
-import Card from "../components/ui/Card";
-import WealthProjectionCalculator from "../components/common/WealthProjectionCalculator";
-import { useExpenses } from "../context/ExpensesContext";
-import GoalBasedInvestmentPlanner from "../components/common/GoalBasedInvestmentPlanner";
-import settingsService from "../services/settingsService";
+import Card from "../components/ui/Card"
+import WealthProjectionCalculator from "../components/common/WealthProjectionCalculator"
+import { useExpenses } from "../context/ExpensesContext"
+import GoalBasedInvestmentPlanner from "../components/common/GoalBasedInvestmentPlanner"
+import settingsService from "../services/settingsService"
+
+const CHART_COLORS = [
+  "#4f46e5",
+  "#06b6d4",
+  "#10b981",
+  "#f59e0b",
+  "#f43f5e",
+  "#8b5cf6",
+  "#0ea5e9",
+  "#84cc16",
+]
 
 const Analytics = () => {
-  const { expenses } = useExpenses();
-  const [monthlyIncome, setMonthlyIncome] = useState(
-    Number(settingsService.getMonthlyIncome()) || 0,
-  );
+  const { expenses } = useExpenses()
+  const [monthlyIncome, setMonthlyIncome] = useState(Number(settingsService.getMonthlyIncome()) || 0)
 
-  const plannerRef = useRef(null);
-  const scrollToPlanner = () =>
-    plannerRef.current?.scrollIntoView({ behavior: "smooth" });
+  const plannerRef = useRef(null)
+  const scrollToPlanner = () => plannerRef.current?.scrollIntoView({ behavior: "smooth" })
 
   const calculateStats = (expenseList) => {
-    const today = new Date();
-    const currentMonth = today.getMonth();
-    const currentYear = today.getFullYear();
+    const today = new Date()
+    const currentMonth = today.getMonth()
+    const currentYear = today.getFullYear()
 
     const monthExpenses = (expenseList || []).filter((expense) => {
-      const expenseDate = new Date(expense.date);
-      if (Number.isNaN(expenseDate.getTime())) return false;
+      const expenseDate = new Date(expense.date)
+      if (Number.isNaN(expenseDate.getTime())) return false
 
-      return (
-        expenseDate.getMonth() === currentMonth &&
-        expenseDate.getFullYear() === currentYear
-      );
-    });
+      return expenseDate.getMonth() === currentMonth && expenseDate.getFullYear() === currentYear
+    })
 
     const weeklyBreakdown = {
-      "Week 1 (1-7)": 0,
-      "Week 2 (8-14)": 0,
-      "Week 3 (15-21)": 0,
-      "Week 4+ (22+)": 0,
-    };
+      "Week 1": 0,
+      "Week 2": 0,
+      "Week 3": 0,
+      "Week 4+": 0,
+    }
 
-    const categoryBreakdown = {};
-    let total = 0;
+    const categoryBreakdown = {}
+    let total = 0
 
     monthExpenses.forEach((expense) => {
-      const day = Number(String(expense.date || "").split("-")[2]) || 1;
-      const amount = Number(expense.amount) || 0;
-      const categoryName = expense.category || "Other";
+      const day = Number(String(expense.date || "").split("-")[2]) || 1
+      const amount = Number(expense.amount) || 0
+      const categoryName = expense.category || "Other"
 
-      if (day <= 7) weeklyBreakdown["Week 1 (1-7)"] += amount;
-      else if (day <= 14) weeklyBreakdown["Week 2 (8-14)"] += amount;
-      else if (day <= 21) weeklyBreakdown["Week 3 (15-21)"] += amount;
-      else weeklyBreakdown["Week 4+ (22+)"] += amount;
+      if (day <= 7) weeklyBreakdown["Week 1"] += amount
+      else if (day <= 14) weeklyBreakdown["Week 2"] += amount
+      else if (day <= 21) weeklyBreakdown["Week 3"] += amount
+      else weeklyBreakdown["Week 4+"] += amount
 
-      categoryBreakdown[categoryName] =
-        (categoryBreakdown[categoryName] || 0) + amount;
-      total += amount;
-    });
+      categoryBreakdown[categoryName] = (categoryBreakdown[categoryName] || 0) + amount
+      total += amount
+    })
 
-    return { totalExpenses: total, weeklyBreakdown, categoryBreakdown };
-  };
+    return {
+      totalExpenses: total,
+      weeklyBreakdown,
+      categoryBreakdown,
+    }
+  }
 
   useEffect(() => {
     const handleSettingsUpdated = (event) => {
-      const { settings } = event.detail || {};
-      if (settings?.monthlyIncome == null) return;
-      setMonthlyIncome(Number(settings.monthlyIncome) || 0);
-    };
+      const { settings } = event.detail || {}
+      if (settings?.monthlyIncome == null) return
+      setMonthlyIncome(Number(settings.monthlyIncome) || 0)
+    }
 
-    window.addEventListener("settingsUpdated", handleSettingsUpdated);
+    window.addEventListener("settingsUpdated", handleSettingsUpdated)
 
-    return () => {
-      window.removeEventListener("settingsUpdated", handleSettingsUpdated);
-    };
-  }, []);
-  const monthlyStats = calculateStats(expenses);
+    return () => window.removeEventListener("settingsUpdated", handleSettingsUpdated)
+  }, [])
 
-  const leftoverMoney = monthlyIncome - monthlyStats.totalExpenses;
+  const monthlyStats = useMemo(() => calculateStats(expenses), [expenses])
+
+  const leftoverMoney = monthlyIncome - monthlyStats.totalExpenses
+  const spendsByCategory = Object.entries(monthlyStats.categoryBreakdown || {})
+    .map(([name, value]) => ({ name, value }))
+    .sort((a, b) => b.value - a.value)
+
+  const categoryChartData = spendsByCategory.slice(0, 6)
+  const weeklyChartData = Object.entries(monthlyStats.weeklyBreakdown || {}).map(([name, value]) => ({
+    name,
+    value,
+  }))
+
+  const totalCategorySpend = categoryChartData.reduce((sum, item) => sum + item.value, 0) || 1
+  const hasExpenseData = (expenses || []).some((expense) => Number(expense.amount) > 0)
 
   return (
-    <div className="space-y-8">
-      <div className="theme-hero rounded-2xl p-6 shadow-lg">
+    <div className="space-y-6 md:space-y-8">
+      <div className="theme-hero rounded-3xl p-5 shadow-lg md:p-7">
         <div className="flex items-center gap-3">
-          <div className="rounded-full bg-white/20 p-2">
-            <BarChart3 size={28} />
+          <div className="rounded-full bg-white/20 p-2.5">
+            <BarChart3 size={24} className="md:h-7 md:w-7" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold">Analytics & Insights</h1>
-            <p className="mt-1 text-sm opacity-90">
+            <h1 className="text-2xl font-bold md:text-3xl">Analytics & Insights</h1>
+            <p className="mt-1 text-sm opacity-90 md:text-base">
               Track spending patterns and investment growth
             </p>
           </div>
         </div>
       </div>
 
-      <section className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Card padding="lg">
-          <div>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Monthly Expenses
-            </p>
-            <h3 className="mt-2 text-2xl font-bold text-gray-900 dark:text-white">
-              Rs {monthlyStats.totalExpenses.toLocaleString()}
-            </h3>
-            <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
-              {monthlyIncome
-                ? ((monthlyStats.totalExpenses / monthlyIncome) * 100).toFixed(
-                    1,
-                  )
-                : 0}
-              % of income
-            </p>
-          </div>
+          <p className="text-caption theme-muted-text">Monthly expenses</p>
+          <h3 className="mt-2 text-2xl font-bold theme-text">
+            Rs {monthlyStats.totalExpenses.toLocaleString()}
+          </h3>
+          <p className="mt-1 text-caption theme-muted-text">
+            {monthlyIncome ? `${((monthlyStats.totalExpenses / monthlyIncome) * 100).toFixed(1)}% of income` : "0.0% of income"}
+          </p>
         </Card>
 
         <Card padding="lg">
-          <div>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Leftover Money
-            </p>
-            <h3 className="mt-2 text-2xl font-bold text-green-600 dark:text-green-400">
-              Rs {leftoverMoney.toLocaleString()}
-            </h3>
-            <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
-              {monthlyIncome
-                ? ((leftoverMoney / monthlyIncome) * 100).toFixed(1)
-                : 0}
-              % of income
-            </p>
-          </div>
+          <p className="text-caption theme-muted-text">Leftover money</p>
+          <h3 className="mt-2 text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+            Rs {leftoverMoney.toLocaleString()}
+          </h3>
+          <p className="mt-1 text-caption theme-muted-text">
+            {monthlyIncome ? `${((leftoverMoney / monthlyIncome) * 100).toFixed(1)}% of income` : "0.0% of income"}
+          </p>
         </Card>
 
         <Card padding="lg">
-          <div>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Annual Potential Growth
-            </p>
-            <h3 className="mt-2 text-2xl font-bold text-blue-600 dark:text-blue-400">
-              Rs{" "}
-              {(leftoverMoney * 12 * 0.09).toLocaleString("en-IN", {
-                maximumFractionDigits: 0,
-              })}
-            </h3>
-            <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
-              at 9% ROI
-            </p>
-          </div>
+          <p className="text-caption theme-muted-text">Average daily spend</p>
+          <h3 className="mt-2 text-2xl font-bold theme-text">
+            Rs {(monthlyStats.totalExpenses / 30).toLocaleString("en-IN", { maximumFractionDigits: 0 })}
+          </h3>
+          <p className="mt-1 text-caption theme-muted-text">Based on current month</p>
+        </Card>
+
+        <Card padding="lg">
+          <p className="text-caption theme-muted-text">Annual potential growth</p>
+          <h3 className="mt-2 text-2xl font-bold text-blue-600 dark:text-blue-400">
+            Rs {(leftoverMoney * 12 * 0.09).toLocaleString("en-IN", { maximumFractionDigits: 0 })}
+          </h3>
+          <p className="mt-1 text-caption theme-muted-text">At 9% annual ROI</p>
         </Card>
       </section>
 
-      <section className="grid gap-4 lg:grid-cols-3">
-        <Card
-          padding="lg"
-          className="bg-linear-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 lg:col-span-1"
-        >
-          <h3 className="mb-4 flex items-center gap-2 font-semibold text-gray-900 dark:text-white">
-            <PieChartIcon size={20} />
-            Category Distribution
-          </h3>
-          <div className="space-y-3">
-            {Object.entries(monthlyStats.categoryBreakdown || {})
-              .sort(
-                ([, leftAmount], [, rightAmount]) => rightAmount - leftAmount,
-              )
-              .slice(0, 5)
-              .map(([category, amount], index) => {
-                const percentage =
-                  (amount / (monthlyStats.totalExpenses || 1)) * 100;
-                const colors = [
-                  "bg-red-500",
-                  "bg-orange-500",
-                  "bg-yellow-500",
-                  "bg-green-500",
-                  "bg-blue-500",
-                ];
-
-                return (
-                  <div key={category || index}>
-                    <div className="mb-1 flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        {category}
-                      </span>
-                      <span className="text-sm font-bold text-gray-900 dark:text-white">
-                        {percentage.toFixed(1)}%
-                      </span>
-                    </div>
-                    <div className="h-2 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
-                      <div
-                        className={`h-full ${colors[index % colors.length]}`}
-                        style={{ width: `${percentage}%` }}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
+      {!hasExpenseData ? (
+        <Card padding="lg" className="border-dashed border-2 border-[var(--border-color)] bg-[var(--surface-color)]">
+          <div className="flex min-h-[220px] flex-col items-center justify-center text-center">
+            <div className="mb-3 rounded-full bg-[var(--accent-soft-color)] p-3">
+              <BarChart3 size={26} className="text-[var(--accent-color)]" />
+            </div>
+            <h3 className="text-xl font-bold theme-text">No spending data yet</h3>
+            <p className="mt-2 max-w-md text-sm theme-muted-text">
+              Add your first expense to unlock category trends, weekly spending insights, and a live financial overview.
+            </p>
           </div>
         </Card>
+      ) : (
+        <section className="grid gap-4 xl:grid-cols-[1.05fr_1.55fr]">
+          <Card padding="lg" className="overflow-hidden">
+            <div className="mb-4 flex items-center gap-2">
+              <PieChartIcon size={18} className="theme-accent-text" />
+              <h3 className="text-lg font-semibold theme-text">Category split</h3>
+            </div>
 
-        <Card
-          padding="lg"
-          className="bg-linear-to-br from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 lg:col-span-2"
-        >
-          <h3 className="mb-4 flex items-center gap-2 font-semibold text-gray-900 dark:text-white">
-            <BarChart3 size={20} />
-            Weekly Spending Trends
-          </h3>
-          <div className="space-y-3">
-            {Object.entries(monthlyStats.weeklyBreakdown || {}).map(
-              ([week, amount], index) => {
-                const percentage = Math.min(
-                  (amount / Math.max(monthlyStats.totalExpenses, 5000)) * 100,
-                  100,
-                );
+            <div className="h-[320px] min-h-[320px] w-full">
+              <ResponsiveContainer width="100%" height="100%" minWidth={260} minHeight={260}>
+                <PieChart width={300} height={260}>
+                  <Pie
+                    data={categoryChartData}
+                    dataKey="value"
+                    nameKey="name"
+                    innerRadius={56}
+                    outerRadius={88}
+                    paddingAngle={3}
+                    stroke="var(--surface)"
+                    strokeWidth={2}
+                  >
+                    {categoryChartData.map((entry, index) => (
+                      <Cell key={`${entry.name}-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    formatter={(value) => [`Rs ${Number(value).toLocaleString()}`, "Spend"]}
+                    contentStyle={{
+                      borderRadius: 12,
+                      border: "1px solid var(--border-color)",
+                      background: "var(--surface-color)",
+                      color: "var(--text-color)",
+                    }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
 
+            <div className="mt-3 space-y-2">
+              {categoryChartData.map((item, index) => {
+                const percentage = (item.value / totalCategorySpend) * 100
                 return (
-                  <div key={week || index}>
-                    <div className="mb-1 flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        {week}
-                      </span>
-                      <span className="text-sm font-bold text-gray-900 dark:text-white">
-                        Rs {amount.toLocaleString()}
-                      </span>
-                    </div>
-                    <div className="h-3 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
-                      <div
-                        className="h-full bg-linear-to-r from-blue-500 to-cyan-500"
-                        style={{ width: `${percentage}%` }}
+                  <div key={item.name} className="flex items-center justify-between gap-3">
+                    <div className="flex min-w-0 items-center gap-2">
+                      <span
+                        className="h-2.5 w-2.5 rounded-full"
+                        style={{ backgroundColor: CHART_COLORS[index % CHART_COLORS.length] }}
                       />
+                      <span className="truncate text-sm theme-text">{item.name}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs theme-muted-text">
+                      <span>{percentage.toFixed(0)}%</span>
+                      <span className="tabular-nums">Rs {item.value.toLocaleString()}</span>
                     </div>
                   </div>
-                );
-              },
-            )}
-          </div>
-        </Card>
-      </section>
+                )
+              })}
+            </div>
+          </Card>
 
-      <Card
-        padding="lg"
-        className="bg-linear-to-r from-indigo-50 to-blue-50 dark:from-indigo-900/20 dark:to-blue-900/20"
-      >
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+          <Card padding="lg" className="overflow-hidden">
+            <div className="mb-4 flex items-center gap-2">
+              <BarChart3 size={18} className="theme-accent-text" />
+              <h3 className="text-lg font-semibold theme-text">Weekly spending trends</h3>
+            </div>
+
+            <div className="h-80 min-h-[320px] w-full">
+              <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={300}>
+                <BarChart data={weeklyChartData} barCategoryGap="16%" width={500} height={300}>
+                  <CartesianGrid vertical={false} stroke="var(--border-color)" strokeDasharray="4 4" />
+                  <XAxis dataKey="name" tickLine={false} axisLine={false} tick={{ fill: "var(--muted-text-color)", fontSize: 12 }} />
+                  <YAxis tickLine={false} axisLine={false} tick={{ fill: "var(--muted-text-color)", fontSize: 12 }} />
+                  <Tooltip
+                    formatter={(value) => [`Rs ${Number(value).toLocaleString()}`, "Spend"]}
+                    contentStyle={{
+                      borderRadius: 12,
+                      border: "1px solid var(--border-color)",
+                      background: "var(--surface-color)",
+                      color: "var(--text-color)",
+                    }}
+                  />
+                  <Bar dataKey="value" radius={[8, 8, 0, 0]} fill="url(#spendGradient)" />
+                  <defs>
+                    <linearGradient id="spendGradient" x1="0" x2="0" y1="0" y2="1">
+                      <stop offset="0%" stopColor="#4f46e5" />
+                      <stop offset="100%" stopColor="#06b6d4" />
+                    </linearGradient>
+                  </defs>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </Card>
+        </section>
+      )}
+
+      <Card padding="lg" className="bg-linear-to-r from-indigo-50 to-blue-50 dark:from-indigo-900/20 dark:to-blue-900/20">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div className="text-center">
-            <p className="text-xs font-semibold uppercase text-gray-600 dark:text-gray-400">
-              Avg Daily
-            </p>
-            <p className="mt-1 text-lg font-bold text-gray-900 dark:text-white">
-              Rs{" "}
-              {(monthlyStats.totalExpenses / 30).toLocaleString("en-IN", {
-                maximumFractionDigits: 0,
-              })}
+            <p className="text-caption theme-muted-text">Avg daily</p>
+            <p className="mt-2 text-xl font-bold theme-text">
+              Rs {(monthlyStats.totalExpenses / 30).toLocaleString("en-IN", { maximumFractionDigits: 0 })}
             </p>
           </div>
           <div className="text-center">
-            <p className="text-xs font-semibold uppercase text-gray-600 dark:text-gray-400">
-              Avg Weekly
-            </p>
-            <p className="mt-1 text-lg font-bold text-gray-900 dark:text-white">
-              Rs{" "}
-              {(monthlyStats.totalExpenses / 4).toLocaleString("en-IN", {
-                maximumFractionDigits: 0,
-              })}
+            <p className="text-caption theme-muted-text">Avg weekly</p>
+            <p className="mt-2 text-xl font-bold theme-text">
+              Rs {(monthlyStats.totalExpenses / 4).toLocaleString("en-IN", { maximumFractionDigits: 0 })}
             </p>
           </div>
           <div className="text-center">
-            <p className="text-xs font-semibold uppercase text-gray-600 dark:text-gray-400">
-              5-Yr Potential
-            </p>
-            <p className="mt-1 text-lg font-bold text-green-600 dark:text-green-400">
-              Rs{" "}
-              {(leftoverMoney * 12 * Math.pow(1.09, 5)).toLocaleString(
-                "en-IN",
-                { maximumFractionDigits: 0 },
-              )}
+            <p className="text-caption theme-muted-text">5-yr potential</p>
+            <p className="mt-2 text-xl font-bold text-emerald-600 dark:text-emerald-400">
+              Rs {(leftoverMoney * 12 * Math.pow(1.09, 5)).toLocaleString("en-IN", { maximumFractionDigits: 0 })}
             </p>
           </div>
           <div className="text-center">
-            <p className="text-xs font-semibold uppercase text-gray-600 dark:text-gray-400">
-              Categories
-            </p>
-            <p className="mt-1 text-lg font-bold text-blue-600 dark:text-blue-400">
+            <p className="text-caption theme-muted-text">Categories</p>
+            <p className="mt-2 text-xl font-bold text-blue-600 dark:text-blue-400">
               {Object.keys(monthlyStats.categoryBreakdown || {}).length}
             </p>
           </div>
@@ -291,73 +303,12 @@ const Analytics = () => {
         currentSavings={100000}
         onFindFunds={scrollToPlanner}
       />
+
       <div ref={plannerRef}>
         <GoalBasedInvestmentPlanner />
       </div>
-
-      <section className="grid gap-4 sm:grid-cols-2">
-        <Card
-          padding="lg"
-          className="bg-linear-to-br from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20"
-        >
-          <div className="flex items-start gap-3">
-            <div>
-              <h3 className="font-semibold text-gray-900 dark:text-white">
-                Wealth Building Strategy
-              </h3>
-              <p className="mt-2 text-sm text-gray-700 dark:text-gray-300">
-                With Rs {leftoverMoney.toLocaleString()} monthly savings:
-              </p>
-              <ul className="mt-2 space-y-1 text-sm text-gray-700 dark:text-gray-300">
-                <li>
-                  1 year: Rs{" "}
-                  {(leftoverMoney * 12 * 1.09).toLocaleString("en-IN", {
-                    maximumFractionDigits: 0,
-                  })}
-                </li>
-                <li>
-                  5 years: Rs{" "}
-                  {(leftoverMoney * 12 * Math.pow(1.09, 5)).toLocaleString(
-                    "en-IN",
-                    { maximumFractionDigits: 0 },
-                  )}
-                </li>
-                <li>
-                  10 years: Rs{" "}
-                  {(leftoverMoney * 12 * Math.pow(1.09, 10)).toLocaleString(
-                    "en-IN",
-                    { maximumFractionDigits: 0 },
-                  )}
-                </li>
-              </ul>
-            </div>
-          </div>
-        </Card>
-
-        <Card
-          padding="lg"
-          className="bg-linear-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20"
-        >
-          <div className="flex items-start gap-3">
-            <div>
-              <h3 className="font-semibold text-gray-900 dark:text-white">
-                Recommended Action Plan
-              </h3>
-              <p className="mt-2 text-sm text-gray-700 dark:text-gray-300">
-                For optimal growth:
-              </p>
-              <ul className="mt-2 space-y-1 text-sm text-gray-700 dark:text-gray-300">
-                <li>20% to Emergency Fund</li>
-                <li>30% to Savings Account</li>
-                <li>40% to Investments (SIP)</li>
-                <li>10% to Personal/Leisure</li>
-              </ul>
-            </div>
-          </div>
-        </Card>
-      </section>
     </div>
-  );
-};
+  )
+}
 
-export default Analytics;
+export default Analytics
