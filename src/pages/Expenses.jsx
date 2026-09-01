@@ -1,29 +1,34 @@
 import { useRef, useState } from "react"
-import { Search, Trash2 } from "lucide-react"
+import { Plus, Search } from "lucide-react"
 import Card from "../components/ui/Card"
 import Input from "../components/ui/Input"
+import Button from "../components/ui/Button"
+import TransactionRow from "../components/ui/TransactionRow"
+import CategoryChip from "../components/ui/CategoryChip"
+import { getCategoryIcon } from "../utils/categoryIcons"
 import { showToast } from "../utils/toastStore"
 import { useExpenses } from "../context/ExpensesContext"
 
+const CATEGORIES = ["All", "Food & Dining", "Entertainment", "Shopping", "Utilities", "Transport", "Subscription", "Healthcare"]
+
 const Expenses = () => {
-  const { deleteExpense, expenses, hasPendingWrites, isReady } = useExpenses()
+  const { deleteExpense, expenses, hasPendingWrites, isReady, openQuickAdd } = useExpenses()
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("All")
   const [pendingDeleteIds, setPendingDeleteIds] = useState(new Set())
   const deleteTimers = useRef({})
 
-  const categories = ["All", "Food & Dining", "Entertainment", "Shopping", "Utilities", "Transport", "Subscription", "Healthcare"]
-
   const visibleExpenses = expenses.filter((e) => !pendingDeleteIds.has(e.id))
   const filteredExpenses = visibleExpenses.filter((expense) => {
     const categoryValue = expense.category || ""
     const noteValue = expense.note || ""
-    const matchesSearch = categoryValue.toLowerCase().includes(searchTerm.toLowerCase()) || noteValue.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesSearch =
+      categoryValue.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      noteValue.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesCategory = selectedCategory === "All" || categoryValue === selectedCategory
     return matchesSearch && matchesCategory
   })
 
-  // Delete immediately hides the row + shows "Deleted · Undo" — no window.confirm().
   const handleDelete = (expense) => {
     const id = expense.id
     setPendingDeleteIds((prev) => new Set(prev).add(id))
@@ -50,65 +55,62 @@ const Expenses = () => {
   return (
     <div className="space-y-6">
       <div className="theme-hero rounded-2xl p-6 shadow-lg">
-        <h1 className="text-3xl font-bold">Expenses</h1>
-        <p className="mt-2 opacity-90">View, manage, and optimize your spending patterns</p>
+        <h1 className="text-h1">Expenses</h1>
+        <p className="text-body mt-2 opacity-90">View, manage, and optimize your spending patterns</p>
       </div>
 
       <div className="space-y-4">
-        <div>
-          <h2 className="text-h2 theme-text">Recent Transactions</h2>
-          {hasPendingWrites ? <p className="theme-muted-text mt-1 text-xs">Saving locally and syncing to your account...</p> : null}
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-h2 theme-text">Recent Transactions</h2>
+            {hasPendingWrites ? (
+              <p className="theme-muted-text mt-1 text-caption">Saving locally and syncing to your account...</p>
+            ) : null}
+          </div>
+          <Button onClick={openQuickAdd} className="flex items-center gap-2">
+            <Plus size={16} />
+            Add Expense
+          </Button>
         </div>
 
         <Card padding="lg">
-          <div className="flex flex-col gap-4 md:flex-row md:items-end">
-            <div className="relative flex-1">
-              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Search</label>
-              <Search size={18} className="pointer-events-none absolute left-3 top-[calc(50%+0.8rem)] -translate-y-1/2 text-gray-400" />
-              <Input placeholder="Search by category or note" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" />
-            </div>
-
-            <div className="w-full md:w-64">
-              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Category</label>
-              <select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="theme-input w-full rounded-lg border px-3 py-2 text-sm transition focus:outline-none focus:ring-2"
-              >
-                {categories.map((category) => (
-                  <option key={category} value={category}>
-                    {category}
-                  </option>
-                ))}
-              </select>
-            </div>
+          <div className="relative">
+            <label className="mb-2 block text-caption theme-muted-text">Search</label>
+            <Search size={18} className="pointer-events-none absolute left-3 top-[calc(50%+0.6rem)] -translate-y-1/2 theme-muted-text" />
+            <Input
+              placeholder="Search by category or note"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {CATEGORIES.map((category) => (
+              <CategoryChip
+                key={category}
+                label={category}
+                selected={selectedCategory === category}
+                onClick={() => setSelectedCategory(category)}
+              />
+            ))}
           </div>
         </Card>
 
         <section className="space-y-2">
-          {filteredExpenses.length > 0 ? filteredExpenses.map((expense) => (
-            <Card key={expense.id} padding="sm" className="cursor-pointer transition-shadow hover:shadow-md">
-              <div className="flex items-center justify-between">
-                <div className="flex flex-1 items-center gap-3">
-                  <div className="flex-1">
-                    <p className="text-body-strong theme-text">{expense.category || "Other"}</p>
-                    <p className="text-caption theme-muted-text">
-                      {expense.note || "No note"} | {new Date(expense.date).toLocaleDateString()}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 text-right">
-                  <p className="tabular-nums text-body-strong" style={{ color: "var(--negative-color)" }}>
-                    - Rs {Number(expense.amount || 0).toLocaleString()}
-                  </p>
-                  <button onClick={() => handleDelete(expense)} title="Delete expense" className="rounded-md p-2 hover:bg-gray-100 dark:hover:bg-gray-800">
-                    <Trash2 size={16} />
-                  </button>
-                </div>
-              </div>
-            </Card>
-          )) : (
-            <Card padding="sm" className="text-center theme-muted-text">
+          {filteredExpenses.length > 0 ? (
+            filteredExpenses.map((expense) => (
+              <TransactionRow
+                key={expense.id}
+                category={expense.category}
+                note={expense.note}
+                date={expense.date}
+                amount={expense.amount}
+                icon={getCategoryIcon(expense.category)}
+                onDelete={() => handleDelete(expense)}
+              />
+            ))
+          ) : (
+            <Card padding="lg" className="text-center theme-muted-text">
               <p>{isReady ? "No expenses found matching your filters" : "Loading expenses..."}</p>
             </Card>
           )}

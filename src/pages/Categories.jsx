@@ -1,33 +1,34 @@
-import { useState } from "react"
-import { Plus, Trash2 } from "lucide-react"
+import { useState } from "react";
+import { Plus, Trash2 } from "lucide-react";
 
-import Card from "../components/ui/Card"
-import Button from "../components/ui/Button"
-import Input from "../components/ui/Input"
-import Modal from "../components/ui/Modal"
-import { useExpenses } from "../context/ExpensesContext"
-import categoriesService from "../services/categoriesService"
+import Card from "../components/ui/Card";
+import Button from "../components/ui/Button";
+import Input from "../components/ui/Input";
+import Modal from "../components/ui/Modal";
+import BudgetProgressBar from "../components/ui/BudgetProgressBar";
+import { useExpenses } from "../context/ExpensesContext";
+import categoriesService from "../services/categoriesService";
 
 const Categories = () => {
-  const { expenses } = useExpenses()
-  const [categories, setCategories] = useState(() => categoriesService.getCategories())
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [newCategory, setNewCategory] = useState({ name: "", emoji: "Misc" })
+  const { expenses } = useExpenses();
+  const [categories, setCategories] = useState(() =>
+    categoriesService.getCategories(),
+  );
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [newCategory, setNewCategory] = useState({ name: "", emoji: "Misc" });
 
-  const [budgetModalCategory, setBudgetModalCategory] = useState(null)
-  const [budgetInput, setBudgetInput] = useState("")
+  const [budgetModalCategory, setBudgetModalCategory] = useState(null);
+  const [budgetInput, setBudgetInput] = useState("");
 
-  const getCategorySpending = (categoryName) => {
-    return expenses
+  const getCategorySpending = (categoryName) =>
+    expenses
       .filter((expense) => expense.category === categoryName)
-      .reduce((sum, expense) => sum + Number(expense.amount || 0), 0)
-  }
+      .reduce((sum, expense) => sum + Number(expense.amount || 0), 0);
 
   const handleAddCategory = () => {
-    if (!newCategory.name.trim()) return
-
+    if (!newCategory.name.trim()) return;
     const nextId =
-      categories.length > 0 ? Math.max(...categories.map((category) => category.id)) + 1 : 1
+      categories.length > 0 ? Math.max(...categories.map((c) => c.id)) + 1 : 1;
     const nextCategories = [
       ...categories,
       {
@@ -36,49 +37,49 @@ const Categories = () => {
         emoji: newCategory.emoji.trim() || "Misc",
         monthlyLimit: null,
       },
-    ]
-    setCategories(nextCategories)
-    categoriesService.saveCategories(nextCategories) // ✅ persist
-    setNewCategory({ name: "", emoji: "Misc" })
-    setIsModalOpen(false)
-  }
+    ];
+    setCategories(nextCategories);
+    categoriesService.saveCategories(nextCategories);
+    setNewCategory({ name: "", emoji: "Misc" });
+    setIsModalOpen(false);
+  };
 
   const handleDeleteCategory = (id) => {
-    const nextCategories = categories.filter((category) => category.id !== id)
-    setCategories(nextCategories)
-    categoriesService.saveCategories(nextCategories) // ✅ persist
-  }
+    const nextCategories = categories.filter((category) => category.id !== id);
+    setCategories(nextCategories);
+    categoriesService.saveCategories(nextCategories);
+  };
 
   const openBudgetModal = (category) => {
-    setBudgetModalCategory(category)
-    setBudgetInput(category.monthlyLimit ? String(category.monthlyLimit) : "")
-  }
+    setBudgetModalCategory(category);
+    setBudgetInput(category.monthlyLimit ? String(category.monthlyLimit) : "");
+  };
 
   const handleSaveBudget = () => {
-    if (!budgetModalCategory) return
-
-    const trimmed = budgetInput.trim()
-    const limit = trimmed === "" ? null : Number.parseFloat(trimmed)
-
-    if (limit !== null && (!Number.isFinite(limit) || limit <= 0)) return
-
-    const nextCategories = categoriesService.updateCategoryLimit(budgetModalCategory.id, limit)
-    setCategories(nextCategories)
-    setBudgetModalCategory(null)
-  }
+    if (!budgetModalCategory) return;
+    const trimmed = budgetInput.trim();
+    const limit = trimmed === "" ? null : Number.parseFloat(trimmed);
+    if (limit !== null && (!Number.isFinite(limit) || limit <= 0)) return;
+    const nextCategories = categoriesService.updateCategoryLimit(
+      budgetModalCategory.id,
+      limit,
+    );
+    setCategories(nextCategories);
+    setBudgetModalCategory(null);
+  };
 
   return (
     <div className="space-y-6">
       <div className="theme-hero rounded-2xl p-6 shadow-lg">
-        <h1 className="text-3xl font-bold">Expense Categories</h1>
-        <p className="mt-2 text-sm opacity-90">Track your spending across categories</p>
+        <h1 className="text-h1">Expense Categories</h1>
+        <p className="text-body mt-2 opacity-90">
+          Track your spending across categories
+        </p>
       </div>
 
       <section className="space-y-4">
         <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-            Your Categories
-          </h2>
+          <h2 className="text-h2 theme-text">Your Categories</h2>
           <Button
             size="sm"
             className="flex w-full items-center gap-2 sm:w-auto"
@@ -91,128 +92,92 @@ const Categories = () => {
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {categories.map((category) => {
-            const spending = getCategorySpending(category.name)
+            const spending = getCategorySpending(category.name);
 
             return (
               <Card
                 key={category.id}
                 padding="lg"
-                className="transition-shadow hover:shadow-lg"
+                className="transition-shadow hover:shadow-md"
               >
                 <div className="space-y-3">
                   <div className="flex items-start justify-between">
                     <div className="flex flex-1 items-center gap-3">
-                      <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold uppercase text-gray-600 dark:bg-gray-800 dark:text-gray-300">
+                      <div
+                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold"
+                        style={{ background: "var(--surface-muted)" }}
+                      >
                         {category.emoji}
-                      </span>
-                      <div className="min-w-0">
-                        <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-                          {category.name}
-                        </h3>
                       </div>
+                      <h3 className="text-body-strong theme-text">
+                        {category.name}
+                      </h3>
                     </div>
                     <button
                       onClick={() => handleDeleteCategory(category.id)}
-                      className="shrink-0 text-gray-400 transition-colors hover:text-red-500 dark:hover:text-red-400"
+                      className="shrink-0 theme-muted-text transition-colors hover:text-red-500"
                     >
                       <Trash2 size={18} />
                     </button>
                   </div>
 
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600 dark:text-gray-400">Spent</span>
-                      <span className="font-semibold text-gray-900 dark:text-white">
+                  {category.monthlyLimit ? (
+                    <BudgetProgressBar
+                      label="Spent"
+                      spent={spending}
+                      limit={category.monthlyLimit}
+                    />
+                  ) : (
+                    <p className="text-caption theme-muted-text">
+                      Spent:{" "}
+                      <span className="tabular-nums text-body-strong theme-text">
                         Rs {spending.toLocaleString()}
                       </span>
-                    </div>
-                  </div>
-
-                  {category.monthlyLimit ? (
-                    <div className="space-y-1">
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-gray-500 dark:text-gray-400">Budget</span>
-                        <span
-                          className={`font-semibold ${
-                            spending >= category.monthlyLimit
-                              ? "text-red-600 dark:text-red-400"
-                              : spending >= category.monthlyLimit * 0.8
-                                ? "text-amber-600 dark:text-amber-400"
-                                : "text-gray-700 dark:text-gray-300"
-                          }`}
-                        >
-                          Rs {spending.toLocaleString()} / {category.monthlyLimit.toLocaleString()}
-                        </span>
-                      </div>
-                      <div
-                        className="h-1.5 w-full overflow-hidden rounded-full"
-                        style={{
-                          background:
-                            spending >= category.monthlyLimit
-                              ? "rgba(220, 38, 38, 0.12)"
-                              : spending >= category.monthlyLimit * 0.8
-                                ? "rgba(245, 158, 11, 0.15)"
-                                : "rgba(34, 197, 94, 0.12)",
-                        }}
-                      >
-                        <div
-                          className={`h-full transition-all ${
-                            spending >= category.monthlyLimit
-                              ? "bg-red-500"
-                              : spending >= category.monthlyLimit * 0.8
-                                ? "bg-amber-500"
-                                : "bg-green-500"
-                          }`}
-                          style={{
-                            width: `${Math.min((spending / category.monthlyLimit) * 100, 100)}%`,
-                          }}
-                        />
-                      </div>
-                    </div>
-                  ) : null}
+                    </p>
+                  )}
 
                   <button
                     onClick={() => openBudgetModal(category)}
-                    className="text-xs font-medium text-indigo-600 hover:underline dark:text-indigo-400"
+                    className="text-caption font-medium theme-accent-text hover:underline"
                   >
                     {category.monthlyLimit ? "Edit budget" : "Set budget"}
                   </button>
                 </div>
               </Card>
-            )
+            );
           })}
         </div>
       </section>
 
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Add New Category">
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title="Add New Category"
+      >
         <div className="space-y-4">
-          <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-              Category Name
-            </label>
-            <Input
-              placeholder="e.g., Education"
-              value={newCategory.name}
-              onChange={(event) =>
-                setNewCategory((previous) => ({ ...previous, name: event.target.value }))
-              }
-            />
-          </div>
-          <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-              Label (optional)
-            </label>
-            <Input
-              placeholder="e.g., Learn"
-              value={newCategory.emoji}
-              maxLength={8}
-              onChange={(event) =>
-                setNewCategory((previous) => ({ ...previous, emoji: event.target.value }))
-              }
-            />
-          </div>
+          <Input
+            label="Category Name"
+            placeholder="e.g., Education"
+            value={newCategory.name}
+            onChange={(e) =>
+              setNewCategory((p) => ({ ...p, name: e.target.value }))
+            }
+          />
+          <Input
+            label="Label (optional)"
+            placeholder="e.g., Learn"
+            value={newCategory.emoji}
+            maxLength={8}
+            onChange={(e) =>
+              setNewCategory((p) => ({ ...p, emoji: e.target.value }))
+            }
+          />
           <div className="flex gap-3">
-            <Button variant="secondary" onClick={() => setIsModalOpen(false)} className="flex-1">
+            <Button
+              variant="secondary"
+              onClick={() => setIsModalOpen(false)}
+              className="flex-1"
+            >
               Cancel
             </Button>
             <Button onClick={handleAddCategory} className="flex-1">
@@ -234,7 +199,7 @@ const Categories = () => {
             min="1"
             placeholder="e.g. 5000"
             value={budgetInput}
-            onChange={(event) => setBudgetInput(event.target.value)}
+            onChange={(e) => setBudgetInput(e.target.value)}
           />
           <div className="flex gap-3">
             <Button
@@ -251,7 +216,7 @@ const Categories = () => {
         </div>
       </Modal>
     </div>
-  )
-}
+  );
+};
 
-export default Categories
+export default Categories;
