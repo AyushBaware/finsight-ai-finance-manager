@@ -1,8 +1,10 @@
+import { AlertTriangle } from "lucide-react"
+
 const BudgetProgressBar = ({ label, spent = 0, limit = 0 }) => {
   const isOverBudget = limit > 0 && spent > limit
   const percent = limit > 0 ? (spent / limit) * 100 : 0
   const progressWidth = Math.min(percent, 100)
-  const fillColor = isOverBudget ? "#DC2626" : "var(--warning-color)" 
+  const fillColor = isOverBudget ? "#DC2626" : "var(--warning-color)"
 
   return (
     <div className="space-y-1.5">
@@ -16,9 +18,9 @@ const BudgetProgressBar = ({ label, spent = 0, limit = 0 }) => {
             <span
               aria-label="Over budget"
               title="Over budget"
-              className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-red-100 text-[10px] font-bold text-red-600"
+              className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400"
             >
-              !
+              <AlertTriangle size={12} strokeWidth={2.5} />
             </span>
           ) : null}
         </div>
