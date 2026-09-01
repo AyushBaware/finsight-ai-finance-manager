@@ -92,7 +92,9 @@ const Login = () => {
         }
         // result is null when this load isn't the return leg of a
         // redirect sign-in — the normal case for every other page view.
-      } catch (error) {
+            } catch (error) {
+        console.error("Google Login Error (redirect result):", error?.code, error)
+
         if (error?.code === "auth/credential-already-in-use") {
           // This Google account already has its own FinSight account
           // elsewhere, so linking failed. Capture this device's
@@ -103,6 +105,10 @@ const Login = () => {
             const anonymousUser = auth.currentUser
             const anonymousExpenses = await getCloudExpenses(anonymousUser)
             const credential = GoogleAuthProvider.credentialFromError(error)
+
+            if (!credential) {
+              throw new Error("No recoverable credential on this error.")
+            }
 
             sessionStorage.setItem(
               PENDING_MERGE_KEY,
@@ -116,11 +122,14 @@ const Login = () => {
             setIsMergePromptOpen(true)
           } catch (captureError) {
             console.error("Failed to prepare account merge:", captureError)
-            setAuthError("Google sign-in failed. Please try again.")
+            setAuthError(
+              `Google sign-in failed while merging accounts (${captureError.message || "unknown error"}). Please try again.`,
+            )
           }
         } else {
-          console.error("Google Login Error:", error)
-          setAuthError("Google sign-in failed. Please try again.")
+          setAuthError(
+            `Google sign-in failed (${error?.code || "unknown"}). Please try again.`,
+          )
         }
       } finally {
         setIsProcessingRedirect(false)

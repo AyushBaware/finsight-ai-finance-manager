@@ -1,4 +1,5 @@
 import { initializeApp } from "firebase/app"
+import { showToast } from "./utils/toastStore"
 import {
   getAuth,
   GoogleAuthProvider,
@@ -67,7 +68,14 @@ if (typeof window !== "undefined") {
       console.error("[firebase.js] Anonymous sign-in failed", error)
       // Non-fatal: dataService.js falls back to localStorage whenever
       // auth.currentUser is null, so the app still works offline/locally
-      // if this fails (e.g. no network on very first load).
+      // if this fails (e.g. no network on very first load). Still worth
+      // surfacing — a silent failure here means cross-device sync quietly
+      // never happens and no one notices until data "disappears."
+      showToast(
+        "Could not start a session. Your data will be saved on this device only.",
+        "warning",
+        6000,
+      )
     })
   })
 }
