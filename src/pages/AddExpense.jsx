@@ -1,10 +1,11 @@
-import { useState } from "react"
-import { Mic, MicOff } from "lucide-react"
+import { useState } from "react";
+import { Mic, MicOff } from "lucide-react";
 
-import Card from "../components/ui/Card"
-import Input from "../components/ui/Input"
-import Button from "../components/ui/Button"
-import { useExpenses } from "../context/ExpensesContext"
+import Card from "../components/ui/Card";
+import Input from "../components/ui/Input";
+import Button from "../components/ui/Button";
+import { useExpenses } from "../context/ExpensesContext";
+import { showToast } from "../utils/toastStore";
 
 const categories = [
   "Food & Dining",
@@ -13,25 +14,25 @@ const categories = [
   "Bills",
   "Entertainment",
   "Health",
-]
+];
 
 const AddExpense = () => {
-  const { addExpense, hasPendingWrites, isOnline, user } = useExpenses()
-  const [amount, setAmount] = useState("")
-  const [selectedCategory, setSelectedCategory] = useState(categories[0])
-  const [note, setNote] = useState("")
-  const [date, setDate] = useState(new Date().toISOString().split("T")[0])
-  const [isListening, setIsListening] = useState(false)
-  const [saving, setSaving] = useState(false)
+  const { addExpense, hasPendingWrites, isOnline, user } = useExpenses();
+  const [amount, setAmount] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState(categories[0]);
+  const [note, setNote] = useState("");
+  const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
+  const [isListening, setIsListening] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {
-    const parsedAmount = parseFloat(amount)
+    const parsedAmount = parseFloat(amount);
     if (Number.isNaN(parsedAmount) || parsedAmount <= 0) {
-      alert("Enter a valid amount")
-      return
+      showToast("Enter a valid amount", "error");
+      return;
     }
 
-    setSaving(true)
+    setSaving(true);
 
     try {
       const savedExpense = await addExpense({
@@ -39,33 +40,34 @@ const AddExpense = () => {
         category: selectedCategory,
         note,
         date,
-      })
+      });
 
       if (!savedExpense) {
-        alert("Failed to save expense")
-        return
+        showToast("Failed to save expense", "error");
+        return;
       }
 
-      alert(
+      showToast(
         user && !isOnline
           ? "Expense saved offline. It will sync automatically when you're back online."
           : "Expense saved successfully!",
-      )
-      setAmount("")
-      setNote("")
-      setDate(new Date().toISOString().split("T")[0])
-      setSelectedCategory(categories[0])
+        "success",
+      );
+      setAmount("");
+      setNote("");
+      setDate(new Date().toISOString().split("T")[0]);
+      setSelectedCategory(categories[0]);
     } catch (error) {
-      console.error("Failed to save expense", error)
-      alert("Failed to save expense")
+      console.error("Failed to save expense", error);
+      alert("Failed to save expense");
     } finally {
-      setSaving(false)
+      setSaving(false);
     }
-  }
+  };
 
   const handleVoiceToggle = () => {
-    setIsListening((currentValue) => !currentValue)
-  }
+    setIsListening((currentValue) => !currentValue);
+  };
 
   return (
     <div className="theme-shell relative space-y-6 pb-24">
@@ -143,7 +145,11 @@ const AddExpense = () => {
       </Card>
 
       <div className="fixed bottom-16 left-0 right-0 z-40 px-4 md:static md:px-0">
-        <Button onClick={handleSave} className="w-full py-3 text-base" disabled={saving}>
+        <Button
+          onClick={handleSave}
+          className="w-full py-3 text-base"
+          disabled={saving}
+        >
           {saving ? "Saving..." : "Save Expense"}
         </Button>
         {hasPendingWrites ? (
@@ -153,7 +159,7 @@ const AddExpense = () => {
         ) : null}
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default AddExpense
+export default AddExpense;
