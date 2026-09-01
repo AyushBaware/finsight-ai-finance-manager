@@ -1,16 +1,26 @@
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
+import Button from "./Button"
 
 const BottomSheet = ({ isOpen, onClose, title, children, confirmDirty }) => {
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false)
+
   useEffect(() => {
     if (!isOpen) return
     document.body.style.overflow = "hidden"
     return () => { document.body.style.overflow = "" }
   }, [isOpen])
 
+  useEffect(() => {
+    if (!isOpen) setShowDiscardConfirm(false)
+  }, [isOpen])
+
   if (!isOpen) return null
 
   const handleBackdropClick = () => {
-    if (confirmDirty && !window.confirm("Discard this entry?")) return
+    if (confirmDirty) {
+      setShowDiscardConfirm(true)
+      return
+    }
     onClose()
   }
 
@@ -35,6 +45,23 @@ const BottomSheet = ({ isOpen, onClose, title, children, confirmDirty }) => {
         <div className="overflow-y-auto px-5 py-4" style={{ maxHeight: "calc(90vh - 60px)" }}>
           {children}
         </div>
+
+        {showDiscardConfirm ? (
+          <div className="absolute inset-0 flex items-center justify-center rounded-t-3xl md:rounded-3xl theme-overlay">
+            <div className="theme-card mx-6 w-full max-w-xs rounded-2xl border p-4 shadow-[var(--shadow-lg)]">
+              <p className="text-body-strong theme-text">Discard this entry?</p>
+              <p className="text-caption theme-muted-text mt-1">Your changes won't be saved.</p>
+              <div className="mt-4 flex gap-2">
+                <Button variant="secondary" size="sm" className="flex-1" onClick={() => setShowDiscardConfirm(false)}>
+                  Keep editing
+                </Button>
+                <Button variant="danger" size="sm" className="flex-1" onClick={() => { setShowDiscardConfirm(false); onClose() }}>
+                  Discard
+                </Button>
+              </div>
+            </div>
+          </div>
+        ) : null}
       </div>
     </div>
   )
