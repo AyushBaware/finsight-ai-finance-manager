@@ -14,11 +14,6 @@ const navItems = [
 ]
 
 const Sidebar = ({ isOpen, onClose, user }) => {
-  // An anonymous Firebase user is present on nearly every load now (guest
-  // mode runs on anonymous auth under the hood) — that must NOT be
-  // treated as "signed in," or a guest could tap "Logout," end their only
-  // session, and lose access to data tied to that anonymous uid. Only a
-  // real (linked/Google) account counts as signed in here.
   const isSignedIn = Boolean(user) && !user.isAnonymous
 
   return (
@@ -49,11 +44,16 @@ const Sidebar = ({ isOpen, onClose, user }) => {
                 onClick={onClose}
                 className={({ isActive }) =>
                   clsx(
-                    "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition",
+                    "flex items-center gap-3 rounded-lg py-2 pl-3 pr-3 text-sm font-medium transition-all border-l-[3px]",
                     isActive
-                      ? "theme-button-primary"
-                      : "theme-muted-text hover:bg-gray-100 dark:hover:bg-gray-800",
+                      ? "border-l-[var(--accent-color)]"
+                      : "border-l-transparent theme-muted-text hover:bg-[var(--surface-muted)]",
                   )
+                }
+                style={({ isActive }) =>
+                  isActive
+                    ? { background: "var(--accent-soft-color)", color: "var(--accent-color)" }
+                    : undefined
                 }
               >
                 <Icon size={18} />
@@ -74,7 +74,8 @@ const Sidebar = ({ isOpen, onClose, user }) => {
                   auth.signOut()
                   onClose()
                 }}
-                className="mt-2 text-sm text-red-500"
+                className="mt-2 text-sm"
+                style={{ color: "var(--negative-color)" }}
               >
                 Logout
               </button>
