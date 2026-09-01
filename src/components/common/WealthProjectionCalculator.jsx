@@ -46,9 +46,9 @@ const WealthProjectionCalculator = ({
 
     // Calculate milestones
     const milestones = [
-      { target: 10000000, label: "₹1 Crore" },
-      { target: 5000000, label: "₹50 Lakhs" },
-      { target: 1000000, label: "₹10 Lakhs" },
+      { target: 10000000, label: "Rs 1 Crore" },
+      { target: 5000000, label: "Rs 50 Lakhs" },
+      { target: 1000000, label: "Rs 10 Lakhs" },
     ];
 
     const achievedMilestones = milestones
@@ -82,20 +82,20 @@ const WealthProjectionCalculator = ({
     if (projection.finalBalance >= 10000000) {
       return {
         title: "🎯 Excellent Wealth Building!",
-        message: `You're on track to build ₹${(projection.finalBalance / 10000000).toFixed(1)} Crore in ${years} years!`,
+        message: `You're on track to build Rs ${(projection.finalBalance / 10000000).toFixed(1)} Crore in ${years} years!`,
         action: "Consider adding more to accelerate wealth creation",
       };
     } else if (projection.finalBalance >= 5000000) {
       return {
         title: "💪 Strong Financial Future",
-        message: `You'll accumulate ₹${(projection.finalBalance / 100000).toFixed(0)} Lakhs in ${years} years`,
+        message: `You'll accumulate Rs ${(projection.finalBalance / 100000).toFixed(0)} Lakhs in ${years} years`,
         action: "Increase monthly investment to reach ₹1 Crore milestone",
       };
     } else {
       return {
         title: "💡 Increase Your Investment",
-        message: `Current monthly investment of ₹${Math.floor(investmentAmount).toLocaleString()} will give ₹${(projection.finalBalance / 100000).toFixed(1)} Lakhs`,
-        action: "Aim to increase monthly investment to ₹20,000+",
+        message: `Current monthly investment of Rs ${Math.floor(investmentAmount).toLocaleString()} will give Rs ${(projection.finalBalance / 100000).toFixed(1)} Lakhs`,
+        action: "Aim to increase monthly investment to Rs 20,000+",
       };
     }
   };
@@ -129,8 +129,8 @@ const WealthProjectionCalculator = ({
               Monthly Investment
             </label>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600 dark:text-gray-400">
-                ₹
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-medium text-gray-600 dark:text-gray-400">
+                Rs
               </span>
               <input
                 type="number"
@@ -138,7 +138,7 @@ const WealthProjectionCalculator = ({
                 onChange={(e) =>
                   setInvestmentAmount(parseFloat(e.target.value) || 0)
                 }
-                className="w-full pl-8 pr-4 py-2 border border-green-200 dark:border-green-800 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full pl-10 pr-4 py-2 border border-green-200 dark:border-green-800 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500"
               />
             </div>
             <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
@@ -236,7 +236,7 @@ const WealthProjectionCalculator = ({
             Final Balance
           </p>
           <h3 className="mt-2 text-2xl font-bold text-blue-600 dark:text-blue-400">
-            ₹{projection.finalBalance.toLocaleString()}
+            Rs {projection.finalBalance.toLocaleString()}
           </h3>
           <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
             In {years} years
@@ -251,7 +251,7 @@ const WealthProjectionCalculator = ({
             Total Gains
           </p>
           <h3 className="mt-2 text-2xl font-bold text-green-600 dark:text-green-400">
-            ₹{projection.totalGains.toLocaleString()}
+            Rs {projection.totalGains.toLocaleString()}
           </h3>
           <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
             {projection.roi}% ROI
@@ -266,7 +266,7 @@ const WealthProjectionCalculator = ({
             Purchasing Power
           </p>
           <h3 className="mt-2 text-2xl font-bold text-purple-600 dark:text-purple-400">
-            ₹{projection.finalPurchasingPower.toLocaleString()}
+            Rs {projection.finalPurchasingPower.toLocaleString()}
           </h3>
           <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
             After {inflationRate}% inflation
@@ -281,7 +281,7 @@ const WealthProjectionCalculator = ({
             Total Invested
           </p>
           <h3 className="mt-2 text-2xl font-bold text-orange-600 dark:text-orange-400">
-            ₹{projection.totalInvested.toLocaleString()}
+            Rs {projection.totalInvested.toLocaleString()}
           </h3>
           <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
             Your contributions
@@ -361,10 +361,10 @@ const WealthProjectionCalculator = ({
                         Year {data.year}
                       </td>
                       <td className="py-3 px-2 text-right text-gray-900 dark:text-white font-semibold">
-                        ₹{data.balance.toLocaleString()}
+                        Rs {data.balance.toLocaleString()}
                       </td>
                       <td className="py-3 px-2 text-right text-gray-600 dark:text-gray-400">
-                        ₹{data.purchasingPower.toLocaleString()}
+                        Rs {data.purchasingPower.toLocaleString()}
                       </td>
                       <td className="py-3 px-2 text-right text-green-600 dark:text-green-400 font-medium">
                         {growth.toFixed(1)}%

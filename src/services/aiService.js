@@ -281,16 +281,16 @@ const getExpenseReductionTips = (expensesByCategory) => {
   const tips = []
 
   if (expensesByCategory["Food & Dining"] > 5000) {
-    tips.push("🍽️ Cooking at home a bit more could free up ₹500-1000 monthly")
+    tips.push("🍽️ Cooking at home a bit more could free up Rs 500-1000 monthly")
   }
   if (expensesByCategory["Entertainment"] > 3000) {
-    tips.push("🎬 Mixing in some free entertainment options could save ₹500-800 monthly")
+    tips.push("🎬 Mixing in some free entertainment options could save Rs 500-800 monthly")
   }
   if (expensesByCategory["Shopping"] > 4000) {
-    tips.push("🛍️ A short pause before non-essential purchases could save ₹1000+ monthly")
+    tips.push("🛍️ A short pause before non-essential purchases could save Rs 1000+ monthly")
   }
   if (expensesByCategory["Utilities"] > 2000) {
-    tips.push("💡 Small energy-usage tweaks could save ₹300-500 monthly")
+    tips.push("💡 Small energy-usage tweaks could save Rs 300-500 monthly")
   }
 
   return tips.length > 0
