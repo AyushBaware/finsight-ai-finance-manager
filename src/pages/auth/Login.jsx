@@ -42,6 +42,7 @@ const clearPendingMerge = () => {
 const Login = () => {
   const navigate = useNavigate()
   const skipRedirectRef = useRef(false)
+  const isRedirectingRef = useRef(false)
 
   const [authError, setAuthError] = useState("")
   const [guestExpenseCount, setGuestExpenseCount] = useState(0)
@@ -154,6 +155,12 @@ const Login = () => {
   }, [navigate])
 
   const handleGoogleLogin = async () => {
+    // Synchronous guard — a double-click before the button visually
+    // disables can otherwise fire two overlapping redirect attempts,
+    // which confuses Firebase's pending-redirect state.
+    if (isRedirectingRef.current) return
+    isRedirectingRef.current = true
+
     setAuthError("")
     setIsSubmitting(true)
     skipRedirectRef.current = true
@@ -168,6 +175,7 @@ const Login = () => {
     } catch (error) {
       console.error("Google Login Error:", error)
       skipRedirectRef.current = false
+      isRedirectingRef.current = false
       setIsSubmitting(false)
       setAuthError("Google sign-in failed. Please try again.")
     }
