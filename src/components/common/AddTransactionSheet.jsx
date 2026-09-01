@@ -6,6 +6,7 @@ import Input from "../ui/Input"
 import CategoryChip from "../ui/CategoryChip"
 import { useExpenses } from "../../context/ExpensesContext"
 import { useVoiceToExpense } from "../../hooks/useVoiceToExpense"
+import { parseVoiceTranscript } from "../../services/expensesApiService" // NEW
 import { showToast } from "../../utils/toastStore"
 
 const CATEGORIES = [
@@ -22,12 +23,34 @@ const AddTransactionSheet = ({ isOpen, onClose }) => {
   const [note, setNote] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
 
+  const applyParsedExpense = (parsed) => {
+    if (parsed.amount) setAmount(String(parsed.amount))
+    if (parsed.category) setCategory(parsed.category)
+    if (parsed.note) setNote(parsed.note)
+  }
+
   // Voice pre-fills the SAME fields Manual uses — no separate confirm screen.
   const { isListening, transcript, error, startListening, stopListening } =
     useVoiceToExpense((expense) => {
-      if (expense.amount > 0) setAmount(String(expense.amount))
-      if (expense.category) setCategory(expense.category)
-      if (expense.note) setNote(expense.note)
+      // 1. Apply the on-device parse immediately — instant, works offline,
+      //    works in Guest Mode.
+      applyParsedExpense(expense)
+
+      // 2. For signed-in users, silently ask the server for a re-parse of
+      //    the same sentence and use it if it's better. This is the same
+      //    parser a future widget/Siri Shortcut will call, so accuracy
+      //    improvements land everywhere at once instead of only here.
+      //    parseVoiceTranscript resolves to null for guests (no token) —
+      //    nothing happens for them, by design.
+      parseVoiceTranscript(expense.originalTranscript)
+        .then((serverParsed) => {
+          if (serverParsed) applyParsedExpense(serverParsed)
+        })
+        .catch((apiError) => {
+          // Non-fatal: the on-device parse from step 1 already filled the
+          // form, so a failed server call just means no refinement.
+          console.warn("Server-side voice parse skipped:", apiError.message)
+        })
     })
 
   const isDirty = Boolean(amount || note)
