@@ -297,7 +297,12 @@ const queueExpenseDeleteFromCloud = (id, user = auth.currentUser) => {
   return true
 }
 
-const getCloudExpenses = async (user = auth.currentUser) => {
+// Exported (was private before) — reads a Firestore user's own expenses.
+// Firestore security rules only allow this while `auth.currentUser` IS
+// that user, which matters for the anonymous→real-account merge below:
+// you must read the anonymous session's expenses BEFORE switching auth,
+// not after.
+export const getCloudExpenses = async (user = auth.currentUser) => {
   if (!user) return []
 
   const expensesQuery = buildExpensesQuery(user)
@@ -478,6 +483,70 @@ export function discardGuestExpenses() {
   emitExpenseChange("sourceChanged", { mode: auth.currentUser ? "cloud" : "guest" })
 }
 
+// Shared merge engine: takes ANY array of expense-shaped objects (from
+// localStorage, or from another Firestore user's docs) and reconciles
+// them into `targetUser`'s Firestore expenses, using the same
+// conflict-key + newest-wins logic either merge path needs. Both
+// mergeGuestExpensesIntoAccount (legacy localStorage guests) and the
+// anonymous→real-account merge in Login.jsx call this.
+export async function mergeExpenseListIntoAccount(sourceExpenses, targetUser) {
+  if (!targetUser) {
+    throw new Error("A logged-in user is required to merge expenses.")
+  }
+
+  if (!Array.isArray(sourceExpenses) || sourceExpenses.length === 0) {
+    return { merged: 0, keptRemote: 0, totalSourceExpenses: 0 }
+  }
+
+  const cloudExpenses = await getCloudExpenses(targetUser)
+  const cloudById = new Map(cloudExpenses.map((expense) => [String(expense.id), expense]))
+  const cloudBySignature = new Map(
+    cloudExpenses.map((expense) => [buildConflictKey(expense), expense]),
+  )
+
+  let merged = 0
+  let keptRemote = 0
+
+  for (const sourceExpense of sourceExpenses) {
+    const normalizedSourceExpense = normalizeExpense(sourceExpense, {
+      userId: targetUser.uid,
+      id: sourceExpense.id,
+    })
+    const signature = buildConflictKey(normalizedSourceExpense)
+    const conflict =
+      cloudById.get(String(normalizedSourceExpense.id)) ?? cloudBySignature.get(signature)
+
+    if (!conflict) {
+      await writeExpenseToCloud(normalizedSourceExpense, targetUser)
+      cloudById.set(normalizedSourceExpense.id, normalizedSourceExpense)
+      cloudBySignature.set(signature, normalizedSourceExpense)
+      merged += 1
+      continue
+    }
+
+    if (getExpenseTimestamp(normalizedSourceExpense) >= getExpenseTimestamp(conflict)) {
+      const resolvedExpense = resolveLatestExpense(
+        conflict,
+        normalizedSourceExpense,
+        conflict.id || normalizedSourceExpense.id,
+      )
+      await writeExpenseToCloud(resolvedExpense, targetUser)
+      cloudById.set(String(resolvedExpense.id), resolvedExpense)
+      cloudBySignature.set(buildConflictKey(resolvedExpense), resolvedExpense)
+      merged += 1
+    } else {
+      keptRemote += 1
+    }
+  }
+
+  emitExpenseChange("merge", { merged, keptRemote })
+
+  return { merged, keptRemote, totalSourceExpenses: sourceExpenses.length }
+}
+
+// Legacy path — kept for devices that still have pre-upgrade localStorage
+// guest data, or the rare case where anonymous auth hasn't finished yet.
+// Delegates the actual reconciliation to mergeExpenseListIntoAccount.
 export async function mergeGuestExpensesIntoAccount(user = auth.currentUser) {
   const currentUser = user ?? auth.currentUser
   if (!currentUser) {
@@ -490,53 +559,12 @@ export async function mergeGuestExpensesIntoAccount(user = auth.currentUser) {
     return { merged: 0, keptRemote: 0, totalGuestExpenses: 0 }
   }
 
-  const cloudExpenses = await getCloudExpenses(currentUser)
-  const cloudById = new Map(cloudExpenses.map((expense) => [String(expense.id), expense]))
-  const cloudBySignature = new Map(
-    cloudExpenses.map((expense) => [buildConflictKey(expense), expense]),
-  )
-
-  let merged = 0
-  let keptRemote = 0
-
-  for (const guestExpense of guestExpenses) {
-    const normalizedGuestExpense = normalizeExpense(guestExpense, {
-      userId: currentUser.uid,
-      id: guestExpense.id,
-    })
-    const signature = buildConflictKey(normalizedGuestExpense)
-    const conflict =
-      cloudById.get(String(normalizedGuestExpense.id)) ?? cloudBySignature.get(signature)
-
-    if (!conflict) {
-      await writeExpenseToCloud(normalizedGuestExpense, currentUser)
-      cloudById.set(normalizedGuestExpense.id, normalizedGuestExpense)
-      cloudBySignature.set(signature, normalizedGuestExpense)
-      merged += 1
-      continue
-    }
-
-    if (getExpenseTimestamp(normalizedGuestExpense) >= getExpenseTimestamp(conflict)) {
-      const resolvedExpense = resolveLatestExpense(
-        conflict,
-        normalizedGuestExpense,
-        conflict.id || normalizedGuestExpense.id,
-      )
-      await writeExpenseToCloud(resolvedExpense, currentUser)
-      cloudById.set(String(resolvedExpense.id), resolvedExpense)
-      cloudBySignature.set(buildConflictKey(resolvedExpense), resolvedExpense)
-      merged += 1
-    } else {
-      keptRemote += 1
-    }
-  }
-
+  const result = await mergeExpenseListIntoAccount(guestExpenses, currentUser)
   discardGuestExpenses()
-  emitExpenseChange("merge", { merged, keptRemote })
 
   return {
-    merged,
-    keptRemote,
+    merged: result.merged,
+    keptRemote: result.keptRemote,
     totalGuestExpenses: guestExpenses.length,
   }
 }
@@ -673,10 +701,12 @@ const dataService = {
   deleteExpense,
   discardGuestExpenses,
   flushQueuedOperations,
+  getCloudExpenses,
   getExpenses,
   getGuestExpenses,
   hasGuestExpenses,
   initializeGuestMode,
+  mergeExpenseListIntoAccount,
   mergeGuestExpensesIntoAccount,
   subscribeToExpenses,
   subscribeToGuestExpenses,

@@ -1,5 +1,10 @@
 import { initializeApp } from "firebase/app"
-import { getAuth, GoogleAuthProvider } from "firebase/auth"
+import {
+  getAuth,
+  GoogleAuthProvider,
+  onAuthStateChanged,
+  signInAnonymously,
+} from "firebase/auth"
 import {
   enableIndexedDbPersistence,
   enableMultiTabIndexedDbPersistence,
@@ -39,6 +44,33 @@ const app = initializeApp(firebaseConfig)
 export const auth = getAuth(app)
 export const provider = new GoogleAuthProvider()
 export const db = getFirestore(app)
+
+// ── Anonymous-first auth bootstrap ─────────────────────────────────────
+// Every device gets a real (anonymous) Firebase user on first load, with
+// no visible sign-in screen and no separate "Guest Mode" data path.
+// Because an anonymous user already has a Firestore-legal uid, their
+// expenses can be written straight to Firestore like any signed-in
+// user's — dataService.js's existing "if (user) { cloud } else { local }"
+// branches already do the right thing here with zero changes, since
+// auth.currentUser is now populated almost immediately, even for guests.
+//
+// Signing out returns a user to a fresh anonymous session automatically
+// (see the listener below) — there is deliberately no "logged out" state
+// in this app; there's only "anonymous" and "signed in."
+export const isAnonymousUser = (user) => Boolean(user?.isAnonymous)
+
+if (typeof window !== "undefined") {
+  onAuthStateChanged(auth, (user) => {
+    if (user) return
+
+    signInAnonymously(auth).catch((error) => {
+      console.error("[firebase.js] Anonymous sign-in failed", error)
+      // Non-fatal: dataService.js falls back to localStorage whenever
+      // auth.currentUser is null, so the app still works offline/locally
+      // if this fails (e.g. no network on very first load).
+    })
+  })
+}
 
 export const FIRESTORE_PERSISTENCE_EVENT = "firestorePersistenceChanged"
 

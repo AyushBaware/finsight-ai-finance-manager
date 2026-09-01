@@ -14,6 +14,13 @@ const navItems = [
 ]
 
 const Sidebar = ({ isOpen, onClose, user }) => {
+  // An anonymous Firebase user is present on nearly every load now (guest
+  // mode runs on anonymous auth under the hood) — that must NOT be
+  // treated as "signed in," or a guest could tap "Logout," end their only
+  // session, and lose access to data tied to that anonymous uid. Only a
+  // real (linked/Google) account counts as signed in here.
+  const isSignedIn = Boolean(user) && !user.isAnonymous
+
   return (
     <>
       {isOpen ? (
@@ -57,7 +64,7 @@ const Sidebar = ({ isOpen, onClose, user }) => {
         </nav>
 
         <div className="theme-border border-t p-4">
-          {user ? (
+          {isSignedIn ? (
             <div>
               <p className="theme-text text-sm font-medium">
                 {user.displayName || user.email}
