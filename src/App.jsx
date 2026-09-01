@@ -22,6 +22,8 @@ import Analytics from "./pages/Analytics"
 import Categories from "./pages/Categories"
 import AddExpense from "./pages/AddExpense"
 import Settings from "./pages/Settings"
+import Splash from "./pages/onboarding/Splash"
+import FirstLaunch, { FIRST_LAUNCH_KEY } from "./pages/onboarding/FirstLaunch"
 import {
   buildThemeVariables,
   getAvailableThemes,
@@ -73,6 +75,14 @@ function App() {
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false)
   const [user, setUser] = useState(null)
   const [isAuthReady, setIsAuthReady] = useState(true)
+  const [hasLaunched, setHasLaunched] = useState(() => {
+    if (typeof window === "undefined") return true
+    try {
+      return localStorage.getItem(FIRST_LAUNCH_KEY) === "true"
+    } catch {
+      return true
+    }
+  })
   const [systemMode, setSystemMode] = useState(getSystemMode)
   const [themePreference, setThemePreference] = useState(getStoredThemePreference)
   const [expenses, setExpenses] = useState([])
@@ -338,6 +348,14 @@ function App() {
   openQuickAdd: () => setIsQuickAddOpen(true),
   closeQuickAdd: () => setIsQuickAddOpen(false),
 }
+
+  if (!isAuthReady) {
+    return <Splash />
+  }
+
+  if (!hasLaunched) {
+    return <FirstLaunch onStart={() => setHasLaunched(true)} />
+  }
 
   return (
     <ThemeContext.Provider
