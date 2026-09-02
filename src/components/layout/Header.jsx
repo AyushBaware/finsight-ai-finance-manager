@@ -1,10 +1,12 @@
-import { Menu, Plus } from "lucide-react"
+import { useNavigate } from "react-router-dom"
+import { Plus, Settings as SettingsIcon } from "lucide-react"
 
 import { useExpenses } from "../../context/ExpensesContext"
 import Button from "../ui/Button"
 import BrandedHeader from "../common/BrandedHeader"
 
-const Header = ({ title, onMenuClick, onAddClick }) => {
+const Header = ({ title, onAddClick }) => {
+  const navigate = useNavigate()
   const { expenseError, hasPendingWrites, isOnline, persistenceState, user } = useExpenses()
 
   const statusLabel = expenseError
@@ -23,10 +25,11 @@ const Header = ({ title, onMenuClick, onAddClick }) => {
     <header className="theme-card theme-border sticky top-0 z-40 flex items-center justify-between border-b px-4 py-3 shadow-sm">
       <div className="flex items-center gap-4">
         <button
-          onClick={onMenuClick}
+          onClick={() => navigate("/settings")}
           className="theme-muted-text rounded-md p-2 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 md:hidden"
+          title="Settings"
         >
-          <Menu size={20} />
+          <SettingsIcon size={20} />
         </button>
 
         <div className="hidden sm:block" />

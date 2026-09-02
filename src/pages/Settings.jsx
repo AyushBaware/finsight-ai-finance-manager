@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react"
+import { Link } from "react-router-dom"
 import {
   DollarSign,
   Download,
@@ -12,6 +13,7 @@ import {
 import Card from "../components/ui/Card"
 import Button from "../components/ui/Button"
 import Input from "../components/ui/Input"
+import { auth } from "../firebase"
 import { useTheme } from "../context/ThemeContext"
 import { EXPENSES_CHANGED_EVENT, getGuestExpenses } from "../services/dataService"
 import settingsService from "../services/settingsService"
@@ -35,6 +37,7 @@ const Settings = () => {
     themes,
     user,
   } = useTheme()
+  const isSignedIn = Boolean(user) && !user.isAnonymous
 
   const [monthlyIncome, setMonthlyIncome] = useState(initialSettings.monthlyIncome)
   const [riskTolerance, setRiskTolerance] = useState(initialSettings.riskTolerance)
@@ -193,6 +196,37 @@ const Settings = () => {
           {notice}
         </div>
       ) : null}
+
+      <Card padding="lg">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div
+              className="flex h-11 w-11 items-center justify-center rounded-full"
+              style={{ backgroundColor: "var(--accent-soft-color)" }}
+            >
+              <User size={20} className="theme-accent-text" />
+            </div>
+            <div>
+              <p className="theme-text text-sm font-semibold">
+                {isSignedIn ? (user.displayName || user.email) : "Guest"}
+              </p>
+              <p className="theme-muted-text text-xs">
+                {isSignedIn ? "Signed in — synced across devices" : "Not signed in — data stays on this device"}
+              </p>
+            </div>
+          </div>
+
+          {isSignedIn ? (
+            <Button variant="secondary" size="sm" onClick={() => auth.signOut()}>
+              Log out
+            </Button>
+          ) : (
+            <Link to="/login">
+              <Button size="sm">Sign in</Button>
+            </Link>
+          )}
+        </div>
+      </Card>
 
       <Card padding="lg">
         <div className="flex items-start gap-4">
