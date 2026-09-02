@@ -31,6 +31,50 @@ const CHART_COLORS = [
   "#84cc16",
 ];
 
+// Rule-based, client-side only — compares this week's top category spend
+// against its own trailing 4-week average. No LLM needed for v1 value.
+const getWeeklyInsight = (expenses = []) => {
+  const now = new Date()
+  const dayMs = 24 * 60 * 60 * 1000
+
+  const daysAgo = (dateStr) => {
+    const d = new Date(dateStr)
+    if (Number.isNaN(d.getTime())) return null
+    return Math.floor((now - d) / dayMs)
+  }
+
+  const thisWeekByCategory = {}
+  const trailingByCategory = {}
+
+  expenses.forEach((expense) => {
+    const age = daysAgo(expense.date)
+    if (age === null || age < 0) return
+    const category = expense.category || "Other"
+    const amount = Number(expense.amount) || 0
+
+    if (age < 7) {
+      thisWeekByCategory[category] = (thisWeekByCategory[category] || 0) + amount
+    } else if (age < 35) {
+      trailingByCategory[category] = (trailingByCategory[category] || 0) + amount
+    }
+  })
+
+  const topEntry = Object.entries(thisWeekByCategory).sort(([, a], [, b]) => b - a)[0]
+  if (!topEntry) return null
+
+  const [topCategory, thisWeekAmount] = topEntry
+  const trailingTotal = trailingByCategory[topCategory] || 0
+  const trailingWeeklyAvg = trailingTotal / 4
+
+  if (trailingWeeklyAvg <= 0) return null
+
+  const percentDiff = ((thisWeekAmount - trailingWeeklyAvg) / trailingWeeklyAvg) * 100
+  if (Math.abs(percentDiff) < 5) return null
+
+  const direction = percentDiff > 0 ? "more" : "less"
+  return `You've spent ${Math.abs(percentDiff).toFixed(0)}% ${direction} on ${topCategory} this week than your trailing 4-week average.`
+}
+
 const Analytics = () => {
   const { expenses } = useExpenses();
   const [monthlyIncome, setMonthlyIncome] = useState(
@@ -102,6 +146,7 @@ const Analytics = () => {
   }, []);
 
   const monthlyStats = useMemo(() => calculateStats(expenses), [expenses]);
+  const weeklyInsight = useMemo(() => getWeeklyInsight(expenses), [expenses]);
 
   const leftoverMoney = monthlyIncome - monthlyStats.totalExpenses;
   const spendsByCategory = Object.entries(monthlyStats.categoryBreakdown || {})
@@ -139,6 +184,10 @@ const Analytics = () => {
           </div>
         </div>
       </div>
+
+      {weeklyInsight ? (
+        <p className="text-body-strong theme-text">{weeklyInsight}</p>
+      ) : null}
 
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
