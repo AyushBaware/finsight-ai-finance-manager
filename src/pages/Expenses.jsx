@@ -6,6 +6,7 @@ import TransactionRow from "../components/ui/TransactionRow"
 import { getCategoryIcon } from "../utils/categoryIcons"
 import { showToast } from "../utils/toastStore"
 import { useExpenses } from "../context/ExpensesContext"
+import accountsService from "../services/accountsService"
 
 const CATEGORIES = ["All", "Food & Dining", "Entertainment", "Shopping", "Utilities", "Transport", "Subscription", "Healthcare"]
 const SWIPE_DELETE_THRESHOLD = -72
@@ -90,10 +91,25 @@ const CategorySelect = ({ value, onChange, className }) => (
   </select>
 )
 
+const ACCOUNTS = ["All", ...accountsService.getAccounts().map((a) => a.name)]
+
+const AccountSelect = ({ value, onChange, className }) => (
+  <select
+    value={value}
+    onChange={(e) => onChange(e.target.value)}
+    className={`theme-input w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 ${className || ""}`}
+  >
+    {ACCOUNTS.map((account) => (
+      <option key={account} value={account}>{account}</option>
+    ))}
+  </select>
+)
+
 const Expenses = () => {
   const { deleteExpense, expenses, hasPendingWrites, isReady } = useExpenses()
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("All")
+  const [selectedAccount, setSelectedAccount] = useState("All")
   const [dateFrom, setDateFrom] = useState("")
   const [dateTo, setDateTo] = useState("")
   const [pendingDeleteIds, setPendingDeleteIds] = useState(new Set())
@@ -108,9 +124,11 @@ const Expenses = () => {
       categoryValue.toLowerCase().includes(searchTerm.toLowerCase()) ||
       noteValue.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesCategory = selectedCategory === "All" || categoryValue === selectedCategory
+    const accountName = accountsService.getAccountById(expense.accountId || "cash")?.name
+    const matchesAccount = selectedAccount === "All" || accountName === selectedAccount
     const matchesFrom = !dateFrom || expense.date >= dateFrom
     const matchesTo = !dateTo || expense.date <= dateTo
-    return matchesSearch && matchesCategory && matchesFrom && matchesTo
+    return matchesSearch && matchesCategory && matchesAccount && matchesFrom && matchesTo
   })
 
   const groupedExpenses = useMemo(() => {
@@ -170,6 +188,10 @@ const Expenses = () => {
             <label className="mb-2 block text-caption theme-muted-text">Category</label>
             <CategorySelect value={selectedCategory} onChange={setSelectedCategory} />
           </div>
+                    <div>
+            <label className="mb-2 block text-caption theme-muted-text">Account</label>
+            <AccountSelect value={selectedAccount} onChange={setSelectedAccount} />
+          </div>
           <div>
             <label className="mb-2 block text-caption theme-muted-text">From</label>
             <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
@@ -197,6 +219,10 @@ const Expenses = () => {
             <div className="mt-3 lg:hidden">
               <label className="mb-2 block text-caption theme-muted-text">Category</label>
               <CategorySelect value={selectedCategory} onChange={setSelectedCategory} />
+            </div>
+                        <div className="mt-3 lg:hidden">
+              <label className="mb-2 block text-caption theme-muted-text">Account</label>
+              <AccountSelect value={selectedAccount} onChange={setSelectedAccount} />
             </div>
           </Card>
 

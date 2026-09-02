@@ -7,12 +7,14 @@ import CategoryChip from "../ui/CategoryChip"
 import { useExpenses } from "../../context/ExpensesContext"
 import { useVoiceToExpense } from "../../hooks/useVoiceToExpense"
 import { parseVoiceTranscript } from "../../services/expensesApiService" // NEW
+import accountsService from "../../services/accountsService"
 import { showToast } from "../../utils/toastStore"
 
 const CATEGORIES = [
   "Food & Dining", "Transport", "Shopping", "Utilities",
   "Entertainment", "Healthcare", "Subscription", "Other",
 ]
+const ACCOUNTS = accountsService.getAccounts()
 const TABS = { MANUAL: "manual", VOICE: "voice", SCAN: "scan" }
 
 const AddTransactionSheet = ({ isOpen, onClose }) => {
@@ -20,6 +22,7 @@ const AddTransactionSheet = ({ isOpen, onClose }) => {
   const [activeTab, setActiveTab] = useState(TABS.MANUAL)
   const [amount, setAmount] = useState("")
   const [category, setCategory] = useState(CATEGORIES[0])
+  const [accountId, setAccountId] = useState(ACCOUNTS[0]?.id || "cash")
   const [note, setNote] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -56,10 +59,11 @@ const AddTransactionSheet = ({ isOpen, onClose }) => {
   const isDirty = Boolean(amount || note)
 
   const resetForm = () => {
-    setAmount("")
-    setCategory(CATEGORIES[0])
-    setNote("")
-  }
+  setAmount("")
+  setCategory(CATEGORIES[0])
+  setAccountId(ACCOUNTS[0]?.id || "cash") 
+  setNote("")
+}
 
   const handleClose = () => {
     resetForm()
@@ -79,6 +83,7 @@ const AddTransactionSheet = ({ isOpen, onClose }) => {
       const savedExpense = await addExpense({
         amount: parsedAmount,
         category,
+        accountId,  
         note: note || "Manual entry",
         date: new Date().toISOString().split("T")[0],
       })
@@ -152,6 +157,20 @@ const AddTransactionSheet = ({ isOpen, onClose }) => {
               <div className="flex flex-wrap gap-2">
                 {CATEGORIES.map((c) => (
                   <CategoryChip key={c} label={c} selected={category === c} onClick={() => setCategory(c)} />
+                ))}
+              </div>
+            </div>
+
+                        <div>
+              <label className="text-caption theme-muted-text mb-1 block">Account</label>
+              <div className="flex flex-wrap gap-2">
+                {ACCOUNTS.map((a) => (
+                  <CategoryChip
+                    key={a.id}
+                    label={`${a.icon} ${a.name}`}
+                    selected={accountId === a.id}
+                    onClick={() => setAccountId(a.id)}
+                  />
                 ))}
               </div>
             </div>

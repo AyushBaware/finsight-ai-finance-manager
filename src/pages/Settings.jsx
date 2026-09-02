@@ -8,6 +8,7 @@ import {
   SunMoon,
   Upload,
   User,
+  Wallet,
 } from "lucide-react"
 
 import Card from "../components/ui/Card"
@@ -227,6 +228,21 @@ const Settings = () => {
           )}
         </div>
       </Card>
+
+      <Card padding="lg">
+  <div className="flex items-center justify-between gap-4">
+    <div className="flex items-center gap-3">
+      <div className="flex h-11 w-11 items-center justify-center rounded-full" style={{ backgroundColor: "var(--accent-soft-color)" }}>
+        <Wallet size={20} className="theme-accent-text" />
+      </div>
+      <div>
+        <p className="theme-text text-sm font-semibold">Wallets & Accounts</p>
+        <p className="theme-muted-text text-xs">Manage Cash, Bank, Card, and set balances</p>
+      </div>
+    </div>
+    <Link to="/accounts"><Button size="sm">Manage</Button></Link>
+  </div>
+</Card>
 
       <Card padding="lg">
         <div className="flex items-start gap-4">

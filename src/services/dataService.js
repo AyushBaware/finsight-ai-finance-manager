@@ -132,10 +132,11 @@ const normalizeExpense = (expense = {}, overrides = {}) => {
   const updatedAt =
     overrides.updatedAt ?? new Date(updatedTimestamp).toISOString()
 
-  const normalized = {
+    const normalized = {
     id: String(overrides.id ?? expense.id ?? generateExpenseId()),
     amount: Number(expense.amount) || 0,
     category: expense.category || "Other",
+    accountId: overrides.accountId ?? expense.accountId ?? "cash",   // ADD THIS LINE
     note: expense.note || "",
     date: toDateString(expense.date || createdAt),
     createdAt,

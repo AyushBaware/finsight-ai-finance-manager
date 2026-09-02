@@ -9,6 +9,8 @@ import { getCategoryIcon } from "../utils/categoryIcons";
 import { useExpenses } from "../context/ExpensesContext";
 import settingsService from "../services/settingsService";
 import categoriesService from "../services/categoriesService";
+import accountsService from "../services/accountsService"
+import { calculateAccountBalance } from "../utils/accountBalance"
 
 const Dashboard = () => {
   const { expenses } = useExpenses();
@@ -114,6 +116,25 @@ const Dashboard = () => {
             </span>
           }
         />
+      </section>
+
+      <section>
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-h2 theme-text">Wallets</h2>
+          <Link to="/accounts" className="theme-link text-sm font-medium hover:underline">
+            Manage
+          </Link>
+        </div>
+        <div className="flex gap-3 overflow-x-auto pb-1">
+          {accountsService.getAccounts().map((account) => (
+            <Card key={account.id} padding="md" className="min-w-[140px] shrink-0">
+              <p className="text-caption theme-muted-text">{account.icon} {account.name}</p>
+              <p className="text-h2 tabular-nums theme-text mt-1">
+                Rs {calculateAccountBalance(account, expenses).toLocaleString()}
+              </p>
+            </Card>
+          ))}
+        </div>
       </section>
 
       {/* Two slim budget strips — the most urgent categories */}

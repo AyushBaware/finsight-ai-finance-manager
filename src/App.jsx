@@ -22,6 +22,7 @@ import Analytics from "./pages/Analytics"
 import Categories from "./pages/Categories"
 import AddExpense from "./pages/AddExpense"
 import Settings from "./pages/Settings"
+import Accounts from "./pages/Accounts"
 import Splash from "./pages/onboarding/Splash"
 import FirstLaunch, { FIRST_LAUNCH_KEY } from "./pages/onboarding/FirstLaunch"
 import {
@@ -60,9 +61,9 @@ const getOnlineState = () => {
 const AuthLayout = ({ children, user, isSidebarOpen, setIsSidebarOpen, onAddClick, isQuickAddOpen, setIsQuickAddOpen }) => (
   <div className="theme-shell flex min-h-screen">
     <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} user={user} />
-    <div className="flex flex-1 flex-col md:ml-64">
+    <div className="flex min-w-0 flex-1 flex-col md:ml-64">
       <Header title="FinSight" onMenuClick={() => setIsSidebarOpen(true)} onAddClick={onAddClick} />
-      <main className="theme-shell flex-1 overflow-y-auto p-4 pb-20 md:pb-4">{children}</main>
+      <main className="theme-shell min-w-0 flex-1 overflow-y-auto p-4 pb-20 md:pb-4">{children}</main>
       <BottomNav onAddClick={onAddClick} />
     </div>
     <AddTransactionSheet isOpen={isQuickAddOpen} onClose={() => setIsQuickAddOpen(false)} />
@@ -432,6 +433,21 @@ function App() {
                   setIsQuickAddOpen={setIsQuickAddOpen}
                 >
                   <Categories />
+                </AuthLayout>
+              }
+            />
+                        <Route
+              path="/accounts"
+              element={
+                <AuthLayout
+                  user={user}
+                  isSidebarOpen={isSidebarOpen}
+                  setIsSidebarOpen={setIsSidebarOpen}
+                  onAddClick={handleQuickAddExpense}
+                  isQuickAddOpen={isQuickAddOpen}
+                  setIsQuickAddOpen={setIsQuickAddOpen}
+                >
+                  <Accounts />
                 </AuthLayout>
               }
             />
