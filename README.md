@@ -136,13 +136,11 @@ npm install
 
 ## Firebase Configuration
 
-Firebase is initialized in `src/firebase.js` using the current `finsight-web` project configuration.
+Firebase config is loaded from environment variables (see `src/firebase.js`).
 
-To use your own Firebase project:
-1. Create a Firebase project
-2. Enable Google Authentication
-3. Create a Firestore database
-4. Replace the config values in `src/firebase.js`
+1. Copy `.env.example` to `.env`
+2. Fill in your Firebase project's web config values (Project Settings → General → Your apps)
+3. Restart the dev server
 
 The app includes offline persistence handling using Firestore and IndexedDB.
 
