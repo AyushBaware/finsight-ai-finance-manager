@@ -3,9 +3,10 @@ import { Link } from "react-router-dom"
 import {
   DollarSign,
   Download,
-  Lightbulb,
+  Monitor,
+  Moon,
   Palette,
-  SunMoon,
+  Sun,
   Upload,
   User,
   Wallet,
@@ -18,36 +19,28 @@ import { auth } from "../firebase"
 import { useTheme } from "../context/ThemeContext"
 import { EXPENSES_CHANGED_EVENT, getGuestExpenses } from "../services/dataService"
 import settingsService from "../services/settingsService"
+import accountsService from "../services/accountsService"
 import { normalizeThemePreference } from "../services/themeService"
 
 const MODE_OPTIONS = [
-  { value: "system", label: "System" },
-  { value: "light", label: "Light" },
-  { value: "dark", label: "Dark" },
+  { value: "system", label: "System", icon: Monitor },
+  { value: "light", label: "Light", icon: Sun },
+  { value: "dark", label: "Dark", icon: Moon },
 ]
 
 const Settings = () => {
   const initialSettings = settingsService.getSettings()
   const fileInputRef = useRef(null)
-  const {
-    activeMode,
-    currentTheme,
-    setThemePreference,
-    systemMode,
-    themePreference,
-    themes,
-    user,
-  } = useTheme()
+  const { activeMode, setThemePreference, themePreference, themes, user } = useTheme()
   const isSignedIn = Boolean(user) && !user.isAnonymous
 
   const [monthlyIncome, setMonthlyIncome] = useState(initialSettings.monthlyIncome)
-  const [riskTolerance, setRiskTolerance] = useState(initialSettings.riskTolerance)
   const [guestExpenseCount, setGuestExpenseCount] = useState(() => getGuestExpenses().length)
   const [notice, setNotice] = useState("")
+  const accountsCount = accountsService.getAccounts().length
 
   useEffect(() => {
     if (!notice) return undefined
-
     const timeoutId = window.setTimeout(() => setNotice(""), 3000)
     return () => window.clearTimeout(timeoutId)
   }, [notice])
@@ -56,30 +49,21 @@ const Settings = () => {
     const refreshGuestExpenseCount = () => {
       setGuestExpenseCount(getGuestExpenses().length)
     }
-
     window.addEventListener(EXPENSES_CHANGED_EVENT, refreshGuestExpenseCount)
     window.addEventListener("storage", refreshGuestExpenseCount)
-
     return () => {
       window.removeEventListener(EXPENSES_CHANGED_EVENT, refreshGuestExpenseCount)
       window.removeEventListener("storage", refreshGuestExpenseCount)
     }
   }, [])
 
-  const showNotice = (message) => {
-    setNotice(message)
-  }
+  const showNotice = (message) => setNotice(message)
 
   const handleSaveIncome = () => {
     if (monthlyIncome && monthlyIncome > 0) {
       settingsService.updateSettings({ monthlyIncome })
       showNotice("Income saved.")
     }
-  }
-
-  const handleSaveRiskTolerance = () => {
-    settingsService.updateSettings({ riskTolerance })
-    showNotice("Risk profile saved.")
   }
 
   const handleThemeSelect = async (themeId) => {
@@ -89,9 +73,7 @@ const Settings = () => {
 
   const handleModeSelect = async (modePreference) => {
     await setThemePreference({ modePreference })
-    showNotice(
-      user ? "Appearance mode synced to your account." : "Appearance mode saved.",
-    )
+    showNotice(user ? "Appearance synced to your account." : "Appearance saved.")
   }
 
   const downloadFile = (filename, content, mimeType) => {
@@ -104,51 +86,18 @@ const Settings = () => {
     URL.revokeObjectURL(url)
   }
 
-  const buildGuestExpenseCsv = (expenses) => {
-    const headers = [
-      "id",
-      "date",
-      "category",
-      "amount",
-      "note",
-      "merchant",
-      "createdAt",
-      "updatedAt",
-      "timestamp",
-    ]
-    const escapeValue = (value) => `"${String(value ?? "").replace(/"/g, "\"\"")}"`
-
-    return [
-      headers.join(","),
-      ...expenses.map((expense) =>
-        headers.map((header) => escapeValue(expense[header])).join(","),
-      ),
-    ].join("\n")
-  }
-
-  const handleExport = (format) => {
+  const handleExportBackup = () => {
     const guestExpenses = getGuestExpenses()
     const exportPayload = {
       exportedAt: new Date().toISOString(),
       themePreference,
       expenses: guestExpenses,
     }
-
     const dateStamp = new Date().toISOString().slice(0, 10)
-
-    if (format === "json") {
-      downloadFile(
-        `finsight-backup-${dateStamp}.json`,
-        JSON.stringify(exportPayload, null, 2),
-        "application/json",
-      )
-      return
-    }
-
     downloadFile(
-      `finsight-guest-expenses-${dateStamp}.csv`,
-      buildGuestExpenseCsv(guestExpenses),
-      "text/csv;charset=utf-8",
+      `finsight-backup-${dateStamp}.json`,
+      JSON.stringify(exportPayload, null, 2),
+      "application/json",
     )
   }
 
@@ -165,55 +114,78 @@ const Settings = () => {
       }
 
       await setThemePreference(normalizeThemePreference(parsed.themePreference))
-      showNotice("Theme settings imported.")
+      showNotice("Theme restored from backup.")
     } catch (error) {
       console.error("Failed to import theme settings", error)
-      showNotice("Could not import theme settings.")
+      showNotice("Could not restore theme from this file.")
     } finally {
       event.target.value = ""
     }
   }
 
   return (
-    <div className="space-y-6">
-      <div className="theme-hero rounded-2xl p-6 shadow-lg">
+    <div className="space-y-4">
+      <div className="theme-hero rounded-2xl p-5 shadow-lg">
         <div className="flex items-center gap-3">
           <div className="rounded-full bg-white/20 p-2">
-            <User size={28} />
+            <User size={22} />
           </div>
           <div>
-            <h1 className="text-3xl font-bold">Settings & Profile</h1>
-            <p className="mt-1 text-sm opacity-90">Configure your financial profile</p>
+            <h1 className="text-xl font-bold">Settings</h1>
+            <p className="mt-0.5 text-xs opacity-90">Your profile, wallets, and app preferences</p>
           </div>
         </div>
       </div>
 
       {notice ? (
-        <div className="rounded-lg border px-4 py-3 text-sm" style={{
-          backgroundColor: "var(--accent-soft-color)",
-          borderColor: "var(--border-color)",
-          color: "var(--text-color)",
-        }}>
+        <div
+          className="rounded-lg border px-4 py-2.5 text-sm"
+          style={{
+            backgroundColor: "var(--accent-soft-color)",
+            borderColor: "var(--border-color)",
+            color: "var(--text-color)",
+          }}
+        >
           {notice}
         </div>
       ) : null}
 
+      {/* 1. Profile / Sign-in */}
       <Card padding="lg">
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div
-              className="flex h-11 w-11 items-center justify-center rounded-full"
-              style={{ backgroundColor: "var(--accent-soft-color)" }}
-            >
-              <User size={20} className="theme-accent-text" />
-            </div>
-            <div>
-              <p className="theme-text text-sm font-semibold">
-                {isSignedIn ? (user.displayName || user.email) : "Guest"}
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-3">
+            {isSignedIn && user.photoURL ? (
+              <img
+                src={user.photoURL}
+                alt=""
+                className="h-11 w-11 shrink-0 rounded-full object-cover"
+                style={{ border: "2px solid var(--accent-color)" }}
+              />
+            ) : (
+              <div
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-bold"
+                style={{
+                  background: "linear-gradient(135deg, var(--accent-color), var(--accent-strong-color))",
+                  color: "var(--accent-contrast-color)",
+                }}
+              >
+                {isSignedIn ? (user.displayName || user.email || "U")[0].toUpperCase() : <User size={18} />}
+              </div>
+            )}
+            <div className="min-w-0">
+              <p className="theme-text truncate text-sm font-semibold">
+                {isSignedIn ? user.displayName || user.email : "Guest"}
               </p>
-              <p className="theme-muted-text text-xs">
-                {isSignedIn ? "Signed in — synced across devices" : "Not signed in — data stays on this device"}
-              </p>
+              <span
+                className="mt-0.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium"
+                style={
+                  isSignedIn
+                    ? { background: "var(--positive-soft-color)", color: "var(--positive-color)" }
+                    : { background: "var(--surface-muted)", color: "var(--muted-text-color)" }
+                }
+              >
+                {isSignedIn ? "Synced across devices" : "Guest — data on this device"}
+              </span>
             </div>
           </div>
 
@@ -229,376 +201,165 @@ const Settings = () => {
         </div>
       </Card>
 
+      {/* 2. Monthly Income — moved up, compact */}
       <Card padding="lg">
-  <div className="flex items-center justify-between gap-4">
-    <div className="flex items-center gap-3">
-      <div className="flex h-11 w-11 items-center justify-center rounded-full" style={{ backgroundColor: "var(--accent-soft-color)" }}>
-        <Wallet size={20} className="theme-accent-text" />
-      </div>
-      <div>
-        <p className="theme-text text-sm font-semibold">Wallets & Accounts</p>
-        <p className="theme-muted-text text-xs">Manage Cash, Bank, Card, and set balances</p>
-      </div>
-    </div>
-    <Link to="/accounts"><Button size="sm">Manage</Button></Link>
-  </div>
-</Card>
-
-      <Card padding="lg">
-        <div className="flex items-start gap-4">
+        <div className="mb-3 flex items-center gap-3">
           <div
-            className="shrink-0 rounded-full p-3"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
             style={{ backgroundColor: "var(--accent-soft-color)" }}
           >
-            <Palette size={24} className="theme-accent-text" />
+            <DollarSign size={18} className="theme-accent-text" />
           </div>
-          <div className="flex-1">
-            <h2 className="theme-text mb-2 text-xl font-semibold">Theme & Font</h2>
-            <p className="theme-muted-text mb-4 text-sm">
-              Pick a curated look. When you are logged in, theme changes sync instantly
-              across your other signed-in browsers and devices.
-            </p>
-
-            <div className="mb-5">
-              <div className="mb-3 flex items-center gap-2">
-                <SunMoon size={16} className="theme-accent-text" />
-                <h3 className="theme-text text-sm font-semibold">Color Mode</h3>
-              </div>
-              <div className="grid gap-3 sm:grid-cols-3">
-                {MODE_OPTIONS.map((option) => (
-                  <button
-                    key={option.value}
-                    type="button"
-                    className="theme-mode-button rounded-xl border px-4 py-3 text-sm font-semibold transition-all"
-                    data-active={String(themePreference.modePreference === option.value)}
-                    onClick={() => handleModeSelect(option.value)}
-                  >
-                    {option.label}
-                  </button>
-                ))}
-              </div>
-              <p className="theme-muted-text mt-3 text-xs">
-                Active palette: <strong>{activeMode}</strong>. System preference is{" "}
-                <strong>{systemMode}</strong>.
-              </p>
-            </div>
-
-            <div className="grid gap-4 lg:grid-cols-3">
-              {themes.map((themeOption) => {
-                const previewPalette = themeOption.colors[activeMode]
-
-                return (
-                  <button
-                    key={themeOption.id}
-                    type="button"
-                    className="theme-preview-card theme-preview-card rounded-2xl p-4 text-left transition-transform hover:-translate-y-1"
-                    data-selected={String(themePreference.themeId === themeOption.id)}
-                    onClick={() => handleThemeSelect(themeOption.id)}
-                  >
-                    <div className="mb-4 flex items-start justify-between gap-3">
-                      <div>
-                        <h3
-                          className="text-lg font-semibold"
-                          style={{
-                            color: previewPalette.text,
-                            fontFamily: themeOption.fontFamily,
-                          }}
-                        >
-                          {themeOption.label}
-                        </h3>
-                        <p
-                          className="mt-1 text-sm"
-                          style={{ color: previewPalette.muted }}
-                        >
-                          {themeOption.description}
-                        </p>
-                      </div>
-                      <span className="theme-theme-badge rounded-full px-3 py-1 text-xs font-semibold">
-                        {themePreference.themeId === themeOption.id ? "Selected" : "Preview"}
-                      </span>
-                    </div>
-
-                    <div
-                      className="rounded-2xl border p-4"
-                      style={{
-                        backgroundColor: previewPalette.background,
-                        borderColor: previewPalette.border,
-                        color: previewPalette.text,
-                        fontFamily: themeOption.fontFamily,
-                      }}
-                    >
-                      <div className="flex gap-2">
-                        <span
-                          className="theme-preview-swatch h-3 flex-1 rounded-full"
-                          style={{ backgroundColor: previewPalette.background }}
-                        />
-                        <span
-                          className="theme-preview-swatch h-3 flex-1 rounded-full"
-                          style={{ backgroundColor: previewPalette.surface }}
-                        />
-                        <span
-                          className="theme-preview-swatch h-3 flex-1 rounded-full"
-                          style={{ backgroundColor: previewPalette.accent }}
-                        />
-                      </div>
-
-                      <div
-                        className="mt-4 rounded-xl px-3 py-2 text-sm font-semibold"
-                        style={{
-                          background:
-                            `linear-gradient(135deg, ${previewPalette.accent}, ${previewPalette.accentStrong})`,
-                          color: previewPalette.accentContrast,
-                        }}
-                      >
-                        FinSight preview
-                      </div>
-
-                      <p className="mt-3 text-sm">
-                        Reports, widgets, and modals inherit this font and palette.
-                      </p>
-                    </div>
-                  </button>
-                )
-              })}
-            </div>
-
-            <div
-              className="mt-5 rounded-2xl border p-4"
-              style={{
-                backgroundColor: "var(--surface-muted)",
-                borderColor: "var(--border-color)",
-              }}
-            >
-              <p className="theme-muted-text text-xs font-semibold uppercase tracking-[0.2em]">
-                Active Theme
-              </p>
-              <p
-                className="theme-text mt-2 text-2xl font-semibold"
-                style={{ fontFamily: currentTheme.fontFamily }}
-              >
-                {currentTheme.label}
-              </p>
-              <p className="theme-muted-text mt-2 text-sm">
-                {user
-                  ? "Live account sync is enabled for this preference."
-                  : "Guest theme is stored locally on this device."}
-              </p>
-            </div>
+          <div>
+            <p className="theme-text text-sm font-semibold">Monthly Income</p>
+            <p className="theme-muted-text text-xs">Used to calculate your leftover money each month</p>
           </div>
+        </div>
+        <div className="flex gap-2">
+          <Input
+            type="number"
+            value={monthlyIncome}
+            onChange={(event) => setMonthlyIncome(parseInt(event.target.value, 10) || 0)}
+            placeholder="45000"
+            className="flex-1"
+          />
+          <Button onClick={handleSaveIncome} className="px-5">
+            Save
+          </Button>
         </div>
       </Card>
 
-      <Card
-        padding="lg"
-        className="border-2 border-green-200 bg-linear-to-br from-green-50 to-emerald-50 dark:border-green-800 dark:from-green-900/20 dark:to-emerald-900/20"
-      >
-        <div className="flex items-start gap-4">
-          <div className="shrink-0 rounded-full bg-green-100 p-3 dark:bg-green-900/30">
-            <DollarSign size={24} className="text-green-600 dark:text-green-400" />
-          </div>
-          <div className="flex-1">
-            <h2 className="mb-4 text-xl font-semibold">Monthly Income</h2>
-            <p className="mb-4 text-sm">
-              Set your monthly income. This helps FinSight calculate your leftover
-              money and investment recommendations.
-            </p>
-            <div className="space-y-4">
+      {/* 3. Wallets & Accounts */}
+      <Link to="/accounts">
+        <Card padding="lg" className="transition-shadow hover:shadow-md">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full"
+                style={{ backgroundColor: "var(--accent-soft-color)" }}
+              >
+                <Wallet size={20} className="theme-accent-text" />
+              </div>
               <div>
-                <label className="theme-muted-text mb-2 block text-sm font-medium">
-                  Total Monthly Income (Rs)
-                </label>
-                <div className="flex gap-2">
-                  <Input
-                    type="number"
-                    value={monthlyIncome}
-                    onChange={(event) =>
-                      setMonthlyIncome(parseInt(event.target.value, 10) || 0)
-                    }
-                    placeholder="45000"
-                    className="flex-1"
-                  />
-                  <Button onClick={handleSaveIncome} className="px-6">
-                    Save
-                  </Button>
-                </div>
-                <p className="theme-muted-text mt-2 text-xs">
-                  Your current monthly income: Rs {monthlyIncome.toLocaleString()}
+                <p className="theme-text text-sm font-semibold">Wallets & Accounts</p>
+                <p className="theme-muted-text text-xs">
+                  {accountsCount} wallet{accountsCount === 1 ? "" : "s"} · Cash, Bank, Card & more
                 </p>
               </div>
             </div>
+            <Button size="sm">Manage</Button>
           </div>
-        </div>
-      </Card>
+        </Card>
+      </Link>
 
-      <Card
-        padding="lg"
-        className="border-2 border-blue-200 bg-linear-to-br from-blue-50 to-indigo-50 dark:border-blue-800 dark:from-blue-900/20 dark:to-indigo-900/20"
-      >
-        <div className="flex items-start gap-4">
-          <div className="shrink-0 rounded-full bg-blue-100 p-3 dark:bg-blue-900/30">
-            <Lightbulb size={24} className="text-blue-600 dark:text-blue-400" />
-          </div>
-          <div className="flex-1">
-            <h2 className="mb-4 text-xl font-semibold">Investment Risk Profile</h2>
-            <p className="mb-4 text-sm">
-              Choose your investment risk tolerance. This determines which investment
-              recommendations you receive.
-            </p>
-            <div className="space-y-3">
-              {[
-                {
-                  value: "low",
-                  label: "Conservative (Low Risk)",
-                  description: "Safety first - Fixed deposits, bonds, savings accounts",
-                },
-                {
-                  value: "medium",
-                  label: "Balanced (Medium Risk)",
-                  description: "Mix of stability and growth - Mutual funds, index funds, FDs",
-                },
-                {
-                  value: "high",
-                  label: "Aggressive (High Risk)",
-                  description: "Growth focused - Stocks, growth funds, crypto",
-                },
-              ].map((option) => (
-                <label
-                  key={option.value}
-                  className="flex cursor-pointer items-center rounded-lg border-2 p-3 transition-all"
-                  style={{
-                    borderColor:
-                      riskTolerance === option.value
-                        ? "var(--accent-color)"
-                        : "var(--border-color)",
-                    backgroundColor:
-                      riskTolerance === option.value
-                        ? "var(--accent-soft-color)"
-                        : "transparent",
-                  }}
-                >
-                  <input
-                    type="radio"
-                    name="risk"
-                    value={option.value}
-                    checked={riskTolerance === option.value}
-                    onChange={(event) => setRiskTolerance(event.target.value)}
-                    className="h-4 w-4"
-                  />
-                  <div className="ml-3 flex-1">
-                    <p className="font-medium">{option.label}</p>
-                    <p className="theme-muted-text text-xs">{option.description}</p>
-                  </div>
-                </label>
-              ))}
-              <Button onClick={handleSaveRiskTolerance} className="mt-4 w-full">
-                Save Risk Profile
-              </Button>
-            </div>
-          </div>
-        </div>
-      </Card>
-
-      <Card
-        padding="lg"
-        className="bg-linear-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20"
-      >
-        <div className="flex items-start gap-4">
-          <div className="shrink-0 rounded-full bg-amber-100 p-3 dark:bg-amber-900/30">
-            <Download size={24} className="text-amber-600 dark:text-amber-400" />
-          </div>
-          <div className="flex-1">
-            <h2 className="mb-2 text-xl font-semibold">Guest Data & Theme Backup</h2>
-            <p className="theme-muted-text mb-4 text-sm">
-              Export guest-mode expenses and your current theme choice in one backup.
-            </p>
-            <p className="mb-4 text-sm">Guest expenses available: {guestExpenseCount}</p>
-            <div className="flex flex-wrap gap-3">
-              <Button variant="secondary" onClick={() => handleExport("json")}>
-                Export JSON
-              </Button>
-              <Button
-                variant="secondary"
-                onClick={() => handleExport("csv")}
-                disabled={guestExpenseCount === 0}
-              >
-                Export CSV
-              </Button>
-              <Button
-                variant="secondary"
-                onClick={() => fileInputRef.current?.click()}
-                className="flex items-center gap-2"
-              >
-                <Upload size={16} />
-                Import Theme JSON
-              </Button>
-            </div>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="application/json"
-              className="hidden"
-              onChange={handleImportTheme}
-            />
-          </div>
-        </div>
-      </Card>
-
-      <Card
-        padding="lg"
-        className="bg-linear-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20"
-      >
-        <h3 className="mb-3 text-xl font-semibold">How Income is Used</h3>
-        <div className="grid gap-3">
-          {[
-            {
-              title: "Monthly Income",
-              copy: "Your total earnings per month",
-            },
-            {
-              title: "Expenses Tracking",
-              copy: "Calculates what percentage of income you spend",
-            },
-            {
-              title: "AI Recommendations",
-              copy: "Suggests how to invest your leftover money",
-            },
-            {
-              title: "Savings Goal",
-              copy: "Helps track if you are meeting goals",
-            },
-          ].map((item) => (
-            <div key={item.title} className="flex items-center gap-3 p-2">
-              <div>
-                <p className="text-sm font-medium">{item.title}</p>
-                <p className="theme-muted-text text-xs">{item.copy}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </Card>
-
+      {/* 4. Appearance — mode + theme merged, compact */}
       <Card padding="lg">
-        <h3 className="mb-3 text-xl font-semibold">Example Calculation</h3>
-        <div className="space-y-2 text-sm">
-          <div className="flex justify-between">
-            <span>Monthly Income:</span>
-            <span className="font-semibold">Rs {monthlyIncome.toLocaleString()}</span>
-          </div>
-          <div className="theme-border my-2 border-t" />
-          <div className="theme-muted-text flex justify-between">
-            <span>Total Expenses (example):</span>
-            <span>Rs 15,000</span>
-          </div>
-          <div className="flex justify-between font-semibold text-green-600 dark:text-green-400">
-            <span>Leftover Money:</span>
-            <span>Rs {(monthlyIncome - 15000).toLocaleString()}</span>
-          </div>
-          <div className="theme-border my-2 border-t" />
-          <p className="theme-muted-text mt-3 text-xs">
-            Your leftover money will be allocated based on your <strong>{riskTolerance}</strong>{" "}
-            risk profile.
-          </p>
+        <div className="mb-4 flex items-center gap-2">
+          <Palette size={18} className="theme-accent-text" />
+          <h2 className="theme-text text-sm font-semibold">Appearance</h2>
         </div>
+
+        <div className="mb-4 flex gap-2">
+          {MODE_OPTIONS.map((option) => {
+            const OptionIcon = option.icon
+            const isActive = themePreference.modePreference === option.value
+            return (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => handleModeSelect(option.value)}
+                className="flex flex-1 flex-col items-center gap-1 rounded-xl border py-2.5 text-xs font-medium transition-all"
+                style={
+                  isActive
+                    ? { borderColor: "var(--accent-color)", background: "var(--accent-soft-color)", color: "var(--accent-color)" }
+                    : { borderColor: "var(--border-color)", color: "var(--muted-text-color)" }
+                }
+              >
+                <OptionIcon size={16} />
+                {option.label}
+              </button>
+            )
+          })}
+        </div>
+
+        <div className="grid grid-cols-3 gap-2">
+          {themes.map((themeOption) => {
+            const previewPalette = themeOption.colors[activeMode]
+            const isSelected = themePreference.themeId === themeOption.id
+
+            return (
+              <button
+                key={themeOption.id}
+                type="button"
+                onClick={() => handleThemeSelect(themeOption.id)}
+                className="flex flex-col items-center gap-1.5 rounded-xl border p-2.5 transition-all"
+                style={
+                  isSelected
+                    ? { borderColor: previewPalette.accent, background: "var(--surface-muted)" }
+                    : { borderColor: "var(--border-color)" }
+                }
+              >
+                <div className="flex -space-x-1.5">
+                  <span
+                    className="h-5 w-5 rounded-full"
+                    style={{ background: previewPalette.background, border: `2px solid ${previewPalette.surface}` }}
+                  />
+                  <span
+                    className="h-5 w-5 rounded-full"
+                    style={{ background: previewPalette.accent, border: `2px solid ${previewPalette.surface}` }}
+                  />
+                  <span
+                    className="h-5 w-5 rounded-full"
+                    style={{ background: previewPalette.accentStrong, border: `2px solid ${previewPalette.surface}` }}
+                  />
+                </div>
+                <span className="theme-text text-xs font-medium">{themeOption.label}</span>
+              </button>
+            )
+          })}
+        </div>
+      </Card>
+
+      {/* 5. Backup — trimmed, honestly labeled */}
+      <Card padding="lg">
+        <div className="mb-3 flex items-center gap-3">
+          <div
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
+            style={{ backgroundColor: "var(--surface-muted)" }}
+          >
+            <Download size={18} className="theme-muted-text" />
+          </div>
+          <div>
+            <p className="theme-text text-sm font-semibold">Backup</p>
+            <p className="theme-muted-text text-xs">
+              {guestExpenseCount} guest expense{guestExpenseCount === 1 ? "" : "s"} on this device
+            </p>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="secondary" size="sm" className="flex-1" onClick={handleExportBackup}>
+            Export Backup
+          </Button>
+          <Button
+            variant="secondary"
+            size="sm"
+            className="flex flex-1 items-center justify-center gap-1.5"
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <Upload size={14} />
+            Restore Theme
+          </Button>
+        </div>
+        <p className="theme-muted-text mt-2 text-caption">
+          Export saves your guest expenses and theme together. Restore currently brings back the theme only.
+        </p>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="application/json"
+          className="hidden"
+          onChange={handleImportTheme}
+        />
       </Card>
     </div>
   )
