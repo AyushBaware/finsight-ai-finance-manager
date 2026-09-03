@@ -1,6 +1,8 @@
 import { Trash2 } from "lucide-react"
 
-const TransactionRow = ({ category, note, date, amount, icon, onDelete }) => {
+const TransactionRow = ({ category, note, date, amount, icon, type = "expense", onDelete }) => {
+  const isIncome = type === "income"
+
   return (
     <div className="group relative flex h-14 items-center gap-3 rounded-xl px-3 theme-card border">
       <div
@@ -18,8 +20,11 @@ const TransactionRow = ({ category, note, date, amount, icon, onDelete }) => {
         </p>
       </div>
 
-      <p className="tabular-nums text-body-strong shrink-0 ml-auto" style={{ color: "var(--negative-color)" }}>
-        − Rs {Number(amount || 0).toLocaleString()}
+      <p
+        className="tabular-nums text-body-strong shrink-0 ml-auto"
+        style={{ color: isIncome ? "var(--positive-color)" : "var(--negative-color)" }}
+      >
+        {isIncome ? "+" : "−"} Rs {Number(amount || 0).toLocaleString()}
       </p>
 
       {onDelete ? (

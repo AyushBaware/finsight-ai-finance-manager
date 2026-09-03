@@ -7,7 +7,7 @@ import Input from "../components/ui/Input"
 import Modal from "../components/ui/Modal"
 import { useExpenses } from "../context/ExpensesContext"
 import accountsService from "../services/accountsService"
-import { calculateAccountBalance, calculateAccountSpend } from "../utils/accountBalance"
+import { calculateAccountBalance, calculateAccountIncome, calculateAccountSpend } from "../utils/accountBalance"
 
 const Accounts = () => {
   const { expenses } = useExpenses()
@@ -78,6 +78,7 @@ const Accounts = () => {
           {accounts.map((account) => {
             const balance = calculateAccountBalance(account, expenses)
             const spent = calculateAccountSpend(account, expenses)
+            const income = calculateAccountIncome(account, expenses)
 
             return (
               <Card key={account.id} padding="lg" className="space-y-3">
@@ -92,7 +93,9 @@ const Accounts = () => {
                     <div>
                       <h3 className="text-body-strong theme-text">{account.name}</h3>
                       <p className="text-caption theme-muted-text">
-                        Spent so far: <span className="tabular-nums">Rs {spent.toLocaleString()}</span>
+                        <span style={{ color: "var(--positive-color)" }} className="tabular-nums">+ Rs {income.toLocaleString()}</span>
+                        {" · "}
+                        <span style={{ color: "var(--negative-color)" }} className="tabular-nums">− Rs {spent.toLocaleString()}</span>
                       </p>
                     </div>
                   </div>
@@ -106,9 +109,14 @@ const Accounts = () => {
                   ) : null}
                 </div>
 
-                <p className="text-h2 tabular-nums theme-text">
-                  Rs {balance.toLocaleString()}
-                </p>
+                <div>
+                  <p className="text-h2 tabular-nums theme-text">
+                    Rs {balance.toLocaleString()}
+                  </p>
+                  <p className="text-caption theme-muted-text">
+                    Opening Rs {(Number(account.openingBalance) || 0).toLocaleString()} + Income − Spent
+                  </p>
+                </div>
 
                 <button
                   onClick={() => openBalanceModal(account)}

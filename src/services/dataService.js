@@ -136,7 +136,8 @@ const normalizeExpense = (expense = {}, overrides = {}) => {
     id: String(overrides.id ?? expense.id ?? generateExpenseId()),
     amount: Number(expense.amount) || 0,
     category: expense.category || "Other",
-    accountId: overrides.accountId ?? expense.accountId ?? "cash",   // ADD THIS LINE
+    accountId: overrides.accountId ?? expense.accountId ?? "cash",
+    type: overrides.type ?? expense.type ?? "expense",
     note: expense.note || "",
     date: toDateString(expense.date || createdAt),
     createdAt,

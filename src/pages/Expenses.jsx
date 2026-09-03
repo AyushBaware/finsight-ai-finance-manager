@@ -72,6 +72,7 @@ const SwipeableRow = ({ expense, onDelete }) => {
           date={expense.date}
           amount={expense.amount}
           icon={getCategoryIcon(expense.category)}
+          type={expense.type}
           onDelete={onDelete}
         />
       </div>
@@ -247,6 +248,7 @@ const Expenses = () => {
                           date={expense.date}
                           amount={expense.amount}
                           icon={getCategoryIcon(expense.category)}
+                          type={expense.type}
                           onDelete={() => handleDelete(expense)}
                         />
                       </div>

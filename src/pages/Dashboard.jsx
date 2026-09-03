@@ -22,10 +22,9 @@ const Dashboard = () => {
     initialSettings.riskTolerance,
   );
 
-  const totalExpenses = expenses.reduce(
-    (sum, e) => sum + (Number(e.amount) || 0),
-    0,
-  );
+  const totalExpenses = expenses
+    .filter((e) => e.type !== "income")
+    .reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
   const recentExpenses = expenses.slice(0, 5);
   const financialData = {
     monthlyIncome,
@@ -48,7 +47,7 @@ const Dashboard = () => {
     .filter((c) => c.monthlyLimit)
     .map((c) => {
       const spent = expenses
-        .filter((e) => e.category === c.name)
+        .filter((e) => e.category === c.name && e.type !== "income")
         .reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
       return { ...c, spent, percent: (spent / c.monthlyLimit) * 100 };
     })
@@ -187,6 +186,7 @@ const Dashboard = () => {
                 date={expense.date}
                 amount={expense.amount}
                 icon={getCategoryIcon(expense.category)}
+                type={expense.type}
               />
             ))
           ) : (

@@ -14,12 +14,17 @@ const CATEGORIES = [
   "Food & Dining", "Transport", "Shopping", "Utilities",
   "Entertainment", "Healthcare", "Subscription", "Other",
 ]
+const INCOME_CATEGORIES = [
+  "Salary", "Freelance", "Business", "Investment Returns", "Gift", "Other Income",
+]
 const ACCOUNTS = accountsService.getAccounts()
 const TABS = { MANUAL: "manual", VOICE: "voice", SCAN: "scan" }
+const TRANSACTION_TYPES = { EXPENSE: "expense", INCOME: "income" }
 
 const AddTransactionSheet = ({ isOpen, onClose }) => {
   const { addExpense, isOnline, user } = useExpenses()
   const [activeTab, setActiveTab] = useState(TABS.MANUAL)
+  const [transactionType, setTransactionType] = useState(TRANSACTION_TYPES.EXPENSE)
   const [amount, setAmount] = useState("")
   const [category, setCategory] = useState(CATEGORIES[0])
   const [accountId, setAccountId] = useState(ACCOUNTS[0]?.id || "cash")
@@ -58,8 +63,17 @@ const AddTransactionSheet = ({ isOpen, onClose }) => {
 
   const isDirty = Boolean(amount || note)
 
+  const activeCategories = transactionType === TRANSACTION_TYPES.INCOME ? INCOME_CATEGORIES : CATEGORIES
+
+  const handleTypeChange = (nextType) => {
+    setTransactionType(nextType)
+    const nextCategories = nextType === TRANSACTION_TYPES.INCOME ? INCOME_CATEGORIES : CATEGORIES
+    setCategory(nextCategories[0])
+  }
+
   const resetForm = () => {
   setAmount("")
+  setTransactionType(TRANSACTION_TYPES.EXPENSE)
   setCategory(CATEGORIES[0])
   setAccountId(ACCOUNTS[0]?.id || "cash") 
   setNote("")
@@ -82,15 +96,18 @@ const AddTransactionSheet = ({ isOpen, onClose }) => {
     try {
       const savedExpense = await addExpense({
         amount: parsedAmount,
+        type: transactionType,
         category,
         accountId,  
-        note: note || "Manual entry",
+        note: note || (transactionType === TRANSACTION_TYPES.INCOME ? "Income" : "Manual entry"),
         date: new Date().toISOString().split("T")[0],
       })
       if (!savedExpense) throw new Error("save failed")
 
       showToast(
-        user && !isOnline ? `Saved offline: Rs ${parsedAmount}` : `Saved: Rs ${parsedAmount}`,
+        user && !isOnline
+          ? `Saved offline: ${transactionType === TRANSACTION_TYPES.INCOME ? "+" : "-"}Rs ${parsedAmount}`
+          : `Saved: ${transactionType === TRANSACTION_TYPES.INCOME ? "+" : "-"}Rs ${parsedAmount}`,
         "success",
       )
       handleClose()
@@ -112,7 +129,10 @@ const AddTransactionSheet = ({ isOpen, onClose }) => {
           ].map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => {
+                setActiveTab(tab.id)
+                if (tab.id !== TABS.MANUAL) handleTypeChange(TRANSACTION_TYPES.EXPENSE)
+              }}
               className="flex-1 rounded-md py-1.5 text-sm font-medium transition-all"
               style={activeTab === tab.id
                 ? { background: "var(--surface-color)", color: "var(--accent-color)" }
@@ -122,6 +142,31 @@ const AddTransactionSheet = ({ isOpen, onClose }) => {
             </button>
           ))}
         </div>
+
+        {activeTab === TABS.MANUAL ? (
+          <div className="flex gap-2 rounded-lg p-1" style={{ background: "var(--surface-muted)" }}>
+            <button
+              type="button"
+              onClick={() => handleTypeChange(TRANSACTION_TYPES.EXPENSE)}
+              className="flex-1 rounded-md py-1.5 text-sm font-semibold transition-all"
+              style={transactionType === TRANSACTION_TYPES.EXPENSE
+                ? { background: "var(--negative-soft-color)", color: "var(--negative-color)" }
+                : { color: "var(--muted-text-color)" }}
+            >
+              − Expense
+            </button>
+            <button
+              type="button"
+              onClick={() => handleTypeChange(TRANSACTION_TYPES.INCOME)}
+              className="flex-1 rounded-md py-1.5 text-sm font-semibold transition-all"
+              style={transactionType === TRANSACTION_TYPES.INCOME
+                ? { background: "var(--positive-soft-color)", color: "var(--positive-color)" }
+                : { color: "var(--muted-text-color)" }}
+            >
+              + Income
+            </button>
+          </div>
+        ) : null}
 
         {activeTab === TABS.SCAN ? (
           <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed py-10 theme-border">
@@ -153,9 +198,11 @@ const AddTransactionSheet = ({ isOpen, onClose }) => {
             </div>
 
             <div>
-              <label className="text-caption theme-muted-text mb-1 block">Category</label>
+              <label className="text-caption theme-muted-text mb-1 block">
+                {transactionType === TRANSACTION_TYPES.INCOME ? "Income Source" : "Category"}
+              </label>
               <div className="flex flex-wrap gap-2">
-                {CATEGORIES.map((c) => (
+                {activeCategories.map((c) => (
                   <CategoryChip key={c} label={c} selected={category === c} onClick={() => setCategory(c)} />
                 ))}
               </div>
