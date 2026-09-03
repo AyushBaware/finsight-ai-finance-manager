@@ -1,9 +1,8 @@
 import { useNavigate } from "react-router-dom"
-import { Plus, Settings as SettingsIcon } from "lucide-react"
+import { Plus, Settings as SettingsIcon, ShieldCheck } from "lucide-react"
 
 import { useExpenses } from "../../context/ExpensesContext"
 import Button from "../ui/Button"
-import BrandedHeader from "../common/BrandedHeader"
 
 const Header = ({ title, onAddClick }) => {
   const navigate = useNavigate()
@@ -23,18 +22,26 @@ const Header = ({ title, onAddClick }) => {
 
   return (
     <header className="theme-card theme-border sticky top-0 z-40 flex items-center justify-between border-b px-4 py-3 shadow-sm">
-      <div className="flex items-center gap-4">
-        <button
-          onClick={() => navigate("/settings")}
-          className="theme-muted-text rounded-md p-2 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 md:hidden"
-          title="Settings"
+      <div className="flex items-center gap-2 md:hidden">
+        <div
+          className="flex h-8 w-8 items-center justify-center rounded-full shadow-sm"
+          style={{
+            background: "linear-gradient(135deg, var(--accent-color), var(--accent-strong-color))",
+            color: "var(--accent-contrast-color)",
+          }}
         >
-          <SettingsIcon size={20} />
-        </button>
-
-        <div className="hidden sm:block" />
-
-        <div className="sm:hidden" />
+          <ShieldCheck size={16} strokeWidth={1.5} />
+        </div>
+        <span
+          className="text-lg font-black leading-none text-transparent"
+          style={{
+            backgroundImage: "linear-gradient(135deg, var(--accent-color), var(--accent-strong-color))",
+            WebkitBackgroundClip: "text",
+            backgroundClip: "text",
+          }}
+        >
+          FinSight
+        </span>
       </div>
 
       <div className="flex items-center gap-3">
@@ -53,6 +60,14 @@ const Header = ({ title, onAddClick }) => {
             <span>Add</span>
           </Button>
         </div>
+
+        <button
+          onClick={() => navigate("/settings")}
+          className="theme-muted-text rounded-md p-2 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 md:hidden"
+          title="Settings"
+        >
+          <SettingsIcon size={20} />
+        </button>
       </div>
     </header>
   )
